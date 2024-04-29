@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func CopyFile(src, dest string, overwrite bool) error {
@@ -50,6 +52,27 @@ func CopyFile(src, dest string, overwrite bool) error {
 	}
 
 	return nil
+}
+
+func FindChildren(rootPath string) ([]string, error) {
+	var files []string
+	suffix := ".nex.hcl"
+
+	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(info.Name(), suffix) {
+			files = append(files, path)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return files, nil
 }
 
 func openFile(file string) (*os.File, error) {

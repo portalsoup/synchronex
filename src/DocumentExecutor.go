@@ -8,7 +8,7 @@ import (
 	"synchronex/src/provision"
 )
 
-func ExecuteDocument(doc hcl.Document) {
+func ExecuteDocument(doc hcl.Provisioner) {
 	if doc.Sync {
 		provision.Sync()
 	}
@@ -19,10 +19,9 @@ func ExecuteDocument(doc hcl.Document) {
 	handlePackages(doc)
 	handleScripts(doc)
 	handleFiles(doc)
-
 }
 
-func handlePackages(doc hcl.Document) {
+func handlePackages(doc hcl.Provisioner) {
 	for _, pkg := range doc.PackagesBlocks {
 		switch pkg.Action {
 		case "install":
@@ -39,7 +38,7 @@ func handlePackages(doc hcl.Document) {
 	}
 }
 
-func handleFiles(doc hcl.Document) {
+func handleFiles(doc hcl.Provisioner) {
 	for _, file := range doc.FilesBlocks {
 		sourceRaw, err := filepath.Abs(file.Source)
 		if err != nil {
@@ -76,7 +75,7 @@ func handleFiles(doc hcl.Document) {
 	}
 }
 
-func handleScripts(doc hcl.Document) {
+func handleScripts(doc hcl.Provisioner) {
 	for _, script := range doc.ScriptsBlocks {
 		switch script.Type {
 		case "shell":
