@@ -13,33 +13,33 @@ import (
 
 func main() {
 	log.Printf("Root check... %t\n", isRoot())
-	if len(os.Args) > 2 {
-		config := readDocument(os.Args[1])
-		err := validateRootRequirement(config.ProvisionerBlock)
+	var foundNexes []string
+	var err error
+
+	// Determine nexes finding strategy
+	if len(os.Args) > 1 {
+		foundNexes = os.Args[1:]
+	} else {
+		foundNexes, err = findNexes()
 		if err != nil {
 			log.Fatal(err)
 		}
-		src.ExecuteDocument(config.ProvisionerBlock)
-	} else {
-		nexes, err := findNexes()
-		if err != nil {
-			return
-		}
+	}
 
-		provisioners := readNexes(nexes)
+	// Parse nexes paths into provisioners
+	provisioners := readNexes(foundNexes)
 
-		errors := validateProvisioners(provisioners)
-		if len(errors) > 0 {
-			for _, err := range errors {
-				log.Println(err)
-			}
-			log.Fatal("Exiting due to errors...")
+	errors := validateProvisioners(provisioners)
+	if len(errors) > 0 {
+		for _, err := range errors {
+			log.Println(err)
 		}
+		log.Fatal("Exiting due to errors...")
+	}
 
-		// If they are validated successfully, then proceed to execute
-		for _, provisioner := range provisioners {
-			src.ExecuteDocument(provisioner)
-		}
+	// If they are validated successfully, then proceed to execute
+	for _, provisioner := range provisioners {
+		src.ExecuteDocument(provisioner)
 	}
 }
 
