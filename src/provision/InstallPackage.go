@@ -93,7 +93,7 @@ func Sync() {
 
 func pacmanInstall(pkg string) bool {
 	log.Printf("Installing... %s\n", pkg)
-	path, err := filepath.Abs("../expect/pacman/install.expect")
+	path, err := filepath.Abs("../expect/pacman/install.sh")
 	if err != nil {
 		log.Println(err)
 	}
@@ -108,7 +108,7 @@ func pacmanInstall(pkg string) bool {
 
 func pacmanRemove(pkg string) bool {
 	log.Printf("Removing... %s\n", pkg)
-	path, err := filepath.Abs("../expect/pacman/remove.expect")
+	path, err := filepath.Abs("../expect/pacman/remove.sh")
 	if err != nil {
 		log.Println(err)
 	}
@@ -132,7 +132,7 @@ func pacmanSync() bool {
 }
 
 func pacmanUpdate() bool {
-	path, err := filepath.Abs("../expect/pacman/update.expect")
+	path, err := filepath.Abs("../expect/pacman/update.sh")
 	if err != nil {
 		log.Println(err)
 	}
