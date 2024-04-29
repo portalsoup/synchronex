@@ -8,9 +8,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"synchronex/src/hcl/schema"
 )
 
-func Install(pkg string) {
+func Install(pkg schema.Package) {
 	log.Printf("%s slated for installation... checking requirements\n", pkg)
 	distroName, distroErr := distroName()
 
@@ -18,11 +19,13 @@ func Install(pkg string) {
 		log.Fatal(distroErr)
 	}
 
+	packageName := pkg.Package
+
 	if distroName == "Arch Linux" {
 		log.Println("Found arch linux... using pacman")
-		if !pacmanFind(pkg) {
+		if !pacmanFind(packageName) {
 			log.Printf("%s not found... installing\n", pkg)
-			if pacmanInstall(pkg) {
+			if pacmanInstall(packageName) {
 				log.Printf("%s installed successfully!\n", pkg)
 			} else {
 				log.Printf("%s installation failed\n", pkg)
@@ -34,7 +37,7 @@ func Install(pkg string) {
 
 }
 
-func Remove(pkg string) {
+func Remove(pkg schema.Package) {
 	log.Printf("%s slated for removal... checking requirements\n", pkg)
 	distroName, distroErr := distroName()
 
@@ -42,10 +45,12 @@ func Remove(pkg string) {
 		log.Fatal(distroErr)
 	}
 
+	packageName := pkg.Package
+
 	if distroName == "Arch Linux" {
 		log.Println("Found arch linux... using pacman")
 		log.Printf("Removing package %s\n", pkg)
-		if pacmanRemove(pkg) {
+		if pacmanRemove(packageName) {
 			log.Printf("%s removed Successfully")
 		} else {
 			log.Printf("%s encountered an error during removal!")
@@ -89,6 +94,35 @@ func Sync() {
 			log.Printf("Sync failed!")
 		}
 	}
+}
+
+func guessPackageManager() string {
+	distroName, distroErr := distroName()
+
+	if distroErr != nil {
+		log.Fatal(distroErr)
+	}
+
+	if distroName == "Arch Linux" {
+		log.Print("Found arch linux... ")
+		if isPackageManagerInstalled("yay") { // yay is an explicit install so check it first
+			log.Println("using yay...")
+		} else if isPackageManagerInstalled("pacman") {
+			log.Println("using pacman...")
+			return "pacman"
+		}
+	} else if distroName == "Ubuntu" {
+		log.Print("Found ubuntu... ")
+		if isPackageManagerInstalled("apt-get") {
+			log.Println("using apt-get...")
+		}
+	}
+	return ""
+}
+
+func isPackageManagerInstalled(pkgManager string) bool {
+	_, err := Exec("which", pkgManager)
+	return err == nil
 }
 
 func pacmanInstall(pkg string) bool {
