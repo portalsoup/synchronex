@@ -5,10 +5,11 @@ import (
 	"path/filepath"
 	"synchronex/src/filemanage"
 	"synchronex/src/hcl"
+	"synchronex/src/hcl/schema"
 	"synchronex/src/provision"
 )
 
-func ExecuteDocument(doc hcl.Provisioner) {
+func ExecuteDocument(doc schema.Provisioner) {
 	if doc.Sync {
 		provision.Sync()
 	}
@@ -21,7 +22,7 @@ func ExecuteDocument(doc hcl.Provisioner) {
 	handleFiles(doc)
 }
 
-func handlePackages(doc hcl.Provisioner) {
+func handlePackages(doc schema.Provisioner) {
 	for _, pkg := range doc.PackagesBlocks {
 		switch pkg.Action {
 		case "install":
@@ -38,7 +39,7 @@ func handlePackages(doc hcl.Provisioner) {
 	}
 }
 
-func handleFiles(doc hcl.Provisioner) {
+func handleFiles(doc schema.Provisioner) {
 	for _, file := range doc.FilesBlocks {
 		sourceRaw, err := filepath.Abs(file.Source)
 		if err != nil {
@@ -79,7 +80,7 @@ func handleFiles(doc hcl.Provisioner) {
 	}
 }
 
-func copyFile(file hcl.File, source, dest string, overwrite bool) {
+func copyFile(file schema.File, source, dest string, overwrite bool) {
 	// pre script?
 	if filemanage.ValidateFileDoWork(dest, overwrite) && file.PreCommand != "" {
 		log.Printf("Executing pre_command for %s", dest)
@@ -105,7 +106,7 @@ func copyFile(file hcl.File, source, dest string, overwrite bool) {
 	}
 }
 
-func handleScripts(doc hcl.Provisioner) {
+func handleScripts(doc schema.Provisioner) {
 	for _, script := range doc.ScriptsBlocks {
 		switch script.Type {
 		case "shell":
