@@ -8,9 +8,9 @@ import (
 	"os/exec"
 )
 
-func Exec(name string, arg ...string) (*exec.Cmd, error) {
+func Exec(arg ...string) (*exec.Cmd, error) {
 	// Command to start the package manager (e.g., pacman or apt-get)
-	cmd := exec.Command(name, arg...) // Change this command as needed
+	cmd := exec.Command(arg[0], arg[1:]...) // Change this command as needed
 
 	// Create pipes for stdin, stdout, and stderr
 	stdin, err := cmd.StdinPipe()

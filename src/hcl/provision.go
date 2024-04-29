@@ -25,7 +25,9 @@ type File struct {
 	Destination string `hcl:"name,label"`
 
 	// If this file is to be copied, then it must have a source
-	Source string `hcl:"src,optional"`
+	Source      string `hcl:"src,optional"`
+	PreCommand  string `hcl:"pre_command,optional"`
+	PostCommand string `hcl:"post_command,optional"`
 }
 
 type Package struct {

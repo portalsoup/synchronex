@@ -12,14 +12,14 @@ import (
 func CopyFile(src, dest string, overwrite bool) error {
 	// Check if destination file already exists
 	if isFilePresent(dest) {
-		log.Println("Found the file already present")
+		log.Printf("%s is already present\n", dest)
 		if overwrite {
 			err := DeleteFile(dest)
 			if err != nil {
 				return err
 			}
 		} else {
-			fmt.Printf("destination file %s already exists", dest)
+			fmt.Printf("destination file %s already exists\n", dest)
 		}
 	}
 
@@ -52,6 +52,15 @@ func CopyFile(src, dest string, overwrite bool) error {
 	}
 
 	return nil
+}
+
+func ValidateFileDoWork(path string, overwrite bool) bool {
+	// Check if destination file already exists
+	if isFilePresent(path) {
+		return overwrite
+	}
+	return true
+
 }
 
 func FindChildren(rootPath string) ([]string, error) {
@@ -92,7 +101,7 @@ func closeFile(file *os.File) {
 }
 
 func createFile(file string) (*os.File, error) {
-	log.Printf("Creating the file at %s", file)
+	log.Printf("Creating the file at %s\n", file)
 	createdFile, err := os.Create(file)
 	if err != nil {
 		return createdFile, err

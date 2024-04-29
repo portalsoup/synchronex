@@ -1,7 +1,6 @@
 package hcl
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -15,11 +14,6 @@ func Scan(doc Provisioner, statement string) string {
 }
 
 func user(doc Provisioner, statement string) string {
-
 	replaced := strings.Replace(statement, User, doc.PersonalUser, -1)
-
-	// Output the result
-	fmt.Println("Original:", statement)
-	fmt.Println("Replaced:", replaced)
 	return replaced
 }

@@ -50,27 +50,57 @@ func handleFiles(doc hcl.Provisioner) {
 
 		switch file.Action {
 		case "put":
-			{
-				err := filemanage.CopyFile(source, dest, false)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
+			copyFile(file, source, dest, false)
 		case "sync":
-			{
-				err := filemanage.CopyFile(source, dest, true)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
+			copyFile(file, source, dest, true)
 		case "remove":
 			{
 				log.Printf("About to delete %s\n", dest)
+				// pre script?
+				if filemanage.ValidateFileDoWork(dest, false) {
+					_, err := provision.Exec("/usr/bin/bash", "-c", file.PreCommand)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
 				err := filemanage.DeleteFile(dest)
 				if err != nil {
 					log.Fatal(err)
 				}
+				// post script?
+				if filemanage.ValidateFileDoWork(dest, false) {
+					_, err := provision.Exec("/usr/bin/bash", "-c", file.PostCommand)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
 			}
+		}
+	}
+}
+
+func copyFile(file hcl.File, source, dest string, overwrite bool) {
+	// pre script?
+	if filemanage.ValidateFileDoWork(dest, overwrite) && file.PreCommand != "" {
+		log.Printf("Executing pre_command for %s", dest)
+		_, err := provision.Exec("/usr/bin/bash", "-c", file.PreCommand)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// do work
+	err := filemanage.CopyFile(source, dest, overwrite)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// post script?
+	if filemanage.ValidateFileDoWork(dest, overwrite) && file.PostCommand != "" {
+		log.Printf("Executing post_command for %s", dest)
+		_, err := provision.Exec("/usr/bin/bash", "-c", file.PostCommand)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 }
@@ -95,8 +125,8 @@ func handleScripts(doc hcl.Provisioner) {
 	}
 }
 
-func runScript(src string, args ...string) {
-	_, err := provision.Exec(src, args...)
+func runScript(args ...string) {
+	_, err := provision.Exec(args...)
 	if err != nil {
 		log.Fatal("failed to execute expect script")
 	}
