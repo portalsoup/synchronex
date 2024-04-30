@@ -26,13 +26,13 @@ func handlePackages(doc schema.Provisioner) {
 	for _, pkg := range doc.PackagesBlocks {
 		switch pkg.Action {
 		case "install":
-			provision.Install(pkg)
+			provision.Install(pkg, doc.PersonalUser, false)
 		case "remove":
 			provision.Remove(pkg)
 		case "replace":
 			{
 				provision.Remove(pkg)
-				provision.Install(pkg)
+				provision.Install(pkg, doc.PersonalUser, false)
 			}
 		default:
 		}

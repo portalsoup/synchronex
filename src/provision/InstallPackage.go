@@ -3,38 +3,41 @@ package provision
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"synchronex/src/hcl/schema"
 )
 
-func Install(pkg schema.Package) {
-	log.Printf("%s slated for installation... checking requirements\n", pkg)
-	distroName, distroErr := distroName()
+func Install(pkg schema.Package, user string, failOnSKip bool) {
+	packageName := pkg.Package
+	packageManager := pkg.PackageManager
 
-	if distroErr != nil {
-		log.Fatal(distroErr)
+	var selectedUser string
+	if pkg.AsUser != "" {
+		selectedUser = pkg.AsUser
+	} else {
+		selectedUser = user
 	}
 
-	packageName := pkg.Package
+	log.Printf("%s/%s slated for installation... checking requirements\n", packageName, packageManager)
 
-	if distroName == "Arch Linux" {
-		log.Println("Found arch linux... using pacman")
-		if !pacmanFind(packageName) {
-			log.Printf("%s not found... installing\n", pkg)
-			if pacmanInstall(packageName) {
-				log.Printf("%s installed successfully!\n", pkg)
-			} else {
-				log.Printf("%s installation failed\n", pkg)
-			}
+	// Ensure selected package manager exists on the system
+	if !isPackageManagerInstalled(packageManager) {
+		msg := "Skipping %s because the %s is not installed"
+		if failOnSKip {
+			log.Fatalf(msg, packageName, packageManager)
 		} else {
-			log.Printf("%s already installed, skipping...\n", pkg)
+			log.Printf(msg, packageName, packageManager)
+			return
 		}
 	}
 
+	if !install(packageName, packageManager, selectedUser) {
+		log.Printf("%s installation failed\n", packageName)
+	}
 }
 
 func Remove(pkg schema.Package) {
@@ -50,7 +53,7 @@ func Remove(pkg schema.Package) {
 	if distroName == "Arch Linux" {
 		log.Println("Found arch linux... using pacman")
 		log.Printf("Removing package %s\n", pkg)
-		if pacmanRemove(packageName) {
+		if remove(packageName, pkg.PackageManager) {
 			log.Printf("%s removed Successfully")
 		} else {
 			log.Printf("%s encountered an error during removal!")
@@ -96,42 +99,21 @@ func Sync() {
 	}
 }
 
-func guessPackageManager() string {
-	distroName, distroErr := distroName()
-
-	if distroErr != nil {
-		log.Fatal(distroErr)
-	}
-
-	if distroName == "Arch Linux" {
-		log.Print("Found arch linux... ")
-		if isPackageManagerInstalled("yay") { // yay is an explicit install so check it first
-			log.Println("using yay...")
-		} else if isPackageManagerInstalled("pacman") {
-			log.Println("using pacman...")
-			return "pacman"
-		}
-	} else if distroName == "Ubuntu" {
-		log.Print("Found ubuntu... ")
-		if isPackageManagerInstalled("apt-get") {
-			log.Println("using apt-get...")
-		}
-	}
-	return ""
-}
-
 func isPackageManagerInstalled(pkgManager string) bool {
 	_, err := Exec("which", pkgManager)
 	return err == nil
 }
 
-func pacmanInstall(pkg string) bool {
-	log.Printf("Installing... %s\n", pkg)
-	path, err := filepath.Abs("../expect/pacman/install.sh")
+func install(pkg string, packageManager string, user string) bool {
+	log.Printf("Installing as %s... %s\n", user, pkg)
+	expectPath := fmt.Sprintf("../expect/%s/install.sh", packageManager)
+	path, err := filepath.Abs(expectPath)
 	if err != nil {
 		log.Println(err)
 	}
-	_, err = Exec(path, pkg)
+
+	// Execute expect script
+	_, err = Exec("su", "-c", fmt.Sprintf("%s %s", path, pkg), user)
 
 	if err != nil {
 		log.Println(err)
@@ -140,9 +122,11 @@ func pacmanInstall(pkg string) bool {
 	return err == nil
 }
 
-func pacmanRemove(pkg string) bool {
+func remove(pkg string, packageManager string) bool {
 	log.Printf("Removing... %s\n", pkg)
-	path, err := filepath.Abs("../expect/pacman/remove.sh")
+	log.Printf("Installing... %s\n", pkg)
+	expectPath := fmt.Sprintf("../expect/%s/remove.sh", packageManager)
+	path, err := filepath.Abs(expectPath)
 	if err != nil {
 		log.Println(err)
 	}
@@ -171,17 +155,6 @@ func pacmanUpdate() bool {
 		log.Println(err)
 	}
 	_, err = Exec(path)
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	return err == nil
-}
-
-func pacmanFind(pkg string) bool {
-	_, err :=
-		exec.Command("pacman", "-Qi", pkg).Output()
 
 	if err != nil {
 		log.Println(err)
