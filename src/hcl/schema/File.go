@@ -23,7 +23,7 @@ type File struct {
 	Group string `hcl:"group,optional"`
 }
 
-func (f File) Handler(defaultUser string) FileExecutor {
+func (f File) Executor(defaultUser string) FileExecutor {
 	sourceRaw, err := filepath.Abs(f.Source)
 	if err != nil {
 		log.Fatal(err)

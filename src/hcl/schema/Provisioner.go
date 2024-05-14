@@ -9,44 +9,41 @@ type Provisioner struct {
 	FilesBlocks    []File    `hcl:"file,block"`
 	FoldersBlocks  []Folder  `hcl:"folder,block"`
 	ScriptsBlocks  []Script  `hcl:"script,block"`
-
-	RequireRoot  bool   `hcl:"require_root,optional"`
-	Sync         bool   `hcl:"sync_repositories,optional"`
-	Upgrade      bool   `hcl:"upgrade_system,optional"`
-	PersonalUser string `hcl:"user"`
 }
 
-func (p Provisioner) Handler() ProvisionExecutor {
+func (p Provisioner) Executor(user string) ProvisionExecutor {
 	return ProvisionExecutor{
 		Provisioner: p,
+		User:        user,
 	}
 }
 
 type ProvisionExecutor struct {
 	Provisioner Provisioner
+	User        string
 }
 
-func (p ProvisionExecutor) Run() {
+func (p ProvisionExecutor) Run(sync, upgrade bool) {
 	// System-level stuff
-	if p.Provisioner.Sync {
+	if sync {
 		provision.Sync()
 	}
-	if p.Provisioner.Upgrade {
+	if upgrade {
 		provision.Upgrade()
 	}
 
 	// Packages
 	for _, pkg := range p.Provisioner.PackagesBlocks {
-		pkg.Handler(p.Provisioner.PersonalUser).Run()
+		pkg.Executor(p.User).Run()
 	}
 
 	// Scripts
 	for _, script := range p.Provisioner.ScriptsBlocks {
-		script.Handler().Run()
+		script.Executor().Run()
 	}
 
 	// Files
 	for _, file := range p.Provisioner.FilesBlocks {
-		file.Handler(p.Provisioner.PersonalUser).Run()
+		file.Executor(p.User).Run()
 	}
 }

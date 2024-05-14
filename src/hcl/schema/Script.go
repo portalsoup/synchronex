@@ -6,17 +6,17 @@ type Script struct {
 	ScriptSource string `hcl:"src"`
 }
 
-func (s Script) Handler() ScriptHandler {
-	return ScriptHandler{
+func (s Script) Executor() ScriptExecutor {
+	return ScriptExecutor{
 		Script: s,
 	}
 }
 
-type ScriptHandler struct {
+type ScriptExecutor struct {
 	Script Script
 }
 
-func (s ScriptHandler) Run() {
+func (s ScriptExecutor) Run() {
 	switch s.Script.Type {
 	case "shell":
 		runScript(s.Script.ScriptSource)

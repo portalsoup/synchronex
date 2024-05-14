@@ -15,13 +15,13 @@ func main() {
 	// Parse nexes rawPaths into objects
 	nexes := schema.ParseNexFiles(foundNexes)
 
-	// Validate each nex
+	// Validate each nex or fail
 	for _, nex := range nexes {
 		nex.Validate()
 	}
 	// If they are validated successfully, then proceed to execute
 	for _, nex := range nexes {
-		nex.ProvisionerBlock.Handler().Run()
+		nex.Executor().Run()
 	}
 }
 

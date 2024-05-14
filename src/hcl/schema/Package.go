@@ -10,7 +10,7 @@ type Package struct {
 	AsUser string `hcl:"as_user,optional"`
 }
 
-func (p Package) Handler(defaultUser string) PackageExecutor {
+func (p Package) Executor(defaultUser string) PackageExecutor {
 	return PackageExecutor{
 		Package:    p,
 		User:       defaultUser,
