@@ -6,9 +6,9 @@ import (
 	"synchronex/src/provision"
 )
 
-func runBashScript(dest string, overwrite bool, file File) {
-	if filemanage.ValidateFileDoWork(dest, false) {
-		_, err := provision.Exec("/usr/bin/bash", "-c", file.PostCommand)
+func executeBashCommand(dest string, overwrite bool, command string) {
+	if filemanage.ValidateFileDoWork(dest, overwrite) {
+		_, err := provision.Exec("/usr/bin/bash", "-c", command)
 		if err != nil {
 			log.Fatal(err)
 		}

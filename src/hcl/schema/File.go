@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"synchronex/src/filemanage"
 	"synchronex/src/hcl/template"
-	"synchronex/src/provision"
 )
 
 type File struct {
@@ -30,11 +29,18 @@ func (f File) Handler(defaultUser string) FileExecutor {
 		log.Fatal(err)
 	}
 
+	user := f.User
+	if user == "" {
+		user = defaultUser
+	}
+
 	return FileExecutor{
 		File:        f,
-		Source:      template.ReplaceUser(defaultUser, sourceRaw),
-		Destination: template.ReplaceUser(defaultUser, f.Destination),
-		BackupUser:  defaultUser,
+		Source:      template.ReplaceUser(user, sourceRaw),
+		Destination: template.ReplaceUser(user, f.Destination),
+		User:        user,
+		Pre:         template.ReplaceUser(user, f.PreCommand),
+		Post:        template.ReplaceUser(user, f.PostCommand),
 	}
 }
 
@@ -42,7 +48,9 @@ type FileExecutor struct {
 	File        File
 	Source      string
 	Destination string
-	BackupUser  string
+	User        string
+	Pre         string
+	Post        string
 }
 
 func (f FileExecutor) Run() {
@@ -57,8 +65,8 @@ func (f FileExecutor) Run() {
 }
 
 func (f FileExecutor) put(overwrite bool) {
-	log.Printf("About to write: %s")
-	copied := copyFile(f.File, f.Source, f.Destination, overwrite, f.BackupUser)
+	log.Printf("About to write: %s", f.Destination)
+	copied := copyFile(f.File, f.Source, f.Destination, overwrite, f.User)
 	if copied {
 		log.Printf(" ...done\n")
 	} else {
@@ -69,17 +77,14 @@ func (f FileExecutor) put(overwrite bool) {
 func (f FileExecutor) remove() {
 	log.Printf("About to delete: %s", f.Destination)
 	// pre script?
-	if filemanage.ValidateFileDoWork(f.Destination, false) {
-		_, err := provision.Exec("/usr/bin/bash", "-c", f.File.PreCommand)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+	executeBashCommand(f.Destination, false, f.Pre)
+
+	// Do work
 	err := filemanage.DeleteFile(f.Destination)
 	if err != nil {
 		log.Printf(" ...failed!\n")
 		log.Fatal(err)
 	}
 	// post script?
-	runBashScript(f.Destination, false, f.File)
+	executeBashCommand(f.Destination, false, f.Post)
 }
