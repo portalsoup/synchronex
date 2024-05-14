@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -15,24 +16,24 @@ func Exec(arg ...string) (*exec.Cmd, error) {
 	// Create pipes for stdin, stdout, and stderr
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		fmt.Println("Error creating stdin pipe:", err)
+		log.Fatal("Error creating stdin pipe:", err)
 		return cmd, err
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		fmt.Println("Error creating stdout pipe:", err)
+		log.Fatal("Error creating stdout pipe:", err)
 		return cmd, err
 	}
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		fmt.Println("Error creating stderr pipe:", err)
+		log.Fatal("Error creating stderr pipe:", err)
 		return cmd, err
 	}
 
 	// Start the command
 	if err := cmd.Start(); err != nil {
-		fmt.Println("Error starting command:", err)
+		log.Fatal("Error starting command:", err)
 		return cmd, err
 	}
 
@@ -43,7 +44,7 @@ func Exec(arg ...string) (*exec.Cmd, error) {
 	// Start a goroutine to read and print output from the command
 	go func() {
 		for outStream.Scan() {
-			fmt.Println(outStream.Text())
+			log.Println(outStream.Text())
 			if err != nil {
 				return
 			}
@@ -53,7 +54,7 @@ func Exec(arg ...string) (*exec.Cmd, error) {
 	// Start a goroutine to read and print output from the command
 	go func() {
 		for errStream.Scan() {
-			fmt.Println(errStream.Text())
+			log.Println(errStream.Text())
 		}
 	}()
 
@@ -62,7 +63,7 @@ func Exec(arg ...string) (*exec.Cmd, error) {
 
 	// Wait for the command to finish
 	if err := cmd.Wait(); err != nil {
-		fmt.Println("Error waiting for command:", err)
+		log.Fatal("Error waiting for command:", err)
 	}
 
 	return cmd, nil
@@ -74,7 +75,7 @@ func keyboardListener(stdin io.WriteCloser) {
 		input := keyboard.Text()
 		_, err := fmt.Fprintln(stdin, input)
 		if err != nil {
-			fmt.Println("Error writing to stdin:", err)
+			log.Fatal("Error writing to stdin:", err)
 			return
 		}
 	}

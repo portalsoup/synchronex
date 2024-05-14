@@ -11,7 +11,7 @@ import (
 	"synchronex/src/hcl/schema"
 )
 
-func Install(pkg schema.Package, user string, failOnSKip bool) {
+func Install(pkg schema.Package, personalUser string, failOnSKip bool) {
 	packageName := pkg.Package
 	packageManager := pkg.PackageManager
 
@@ -19,18 +19,18 @@ func Install(pkg schema.Package, user string, failOnSKip bool) {
 	if pkg.AsUser != "" {
 		selectedUser = pkg.AsUser
 	} else {
-		selectedUser = user
+		selectedUser = personalUser
 	}
 
 	log.Printf("%s/%s slated for installation... checking requirements\n", packageName, packageManager)
 
 	// Ensure selected package manager exists on the system
 	if !isPackageManagerInstalled(packageManager) {
-		msg := "Skipping %s because the %s is not installed"
+		msg := "%s %s because the %s is not installed"
 		if failOnSKip {
-			log.Fatalf(msg, packageName, packageManager)
+			log.Fatalf(msg, "Failing", packageName, packageManager)
 		} else {
-			log.Printf(msg, packageName, packageManager)
+			log.Printf(msg, "Skipping", packageName, packageManager)
 			return
 		}
 	}
@@ -38,6 +38,17 @@ func Install(pkg schema.Package, user string, failOnSKip bool) {
 	if !install(packageName, packageManager, selectedUser) {
 		log.Printf("%s installation failed\n", packageName)
 	}
+}
+
+func IsInstalled(pkg schema.Package, personalUser string) bool {
+	var selectedUser string
+	if pkg.AsUser != "" {
+		selectedUser = pkg.AsUser
+	} else {
+		selectedUser = personalUser
+	}
+
+	return isInstalled(pkg.Package, pkg.PackageManager, selectedUser)
 }
 
 func Remove(pkg schema.Package) {
@@ -119,6 +130,22 @@ func install(pkg string, packageManager string, user string) bool {
 		log.Println(err)
 	}
 
+	return err == nil
+}
+
+func isInstalled(pkg string, pkgManager string, user string) bool {
+	log.Printf("Checking if %s is installed by %s...", pkg, pkgManager)
+	scriptPath := fmt.Sprintf("../expect/%s/check-installed.sh", pkgManager)
+
+	path, err := filepath.Abs(scriptPath)
+	if err != nil {
+		log.Println(err)
+	}
+
+	_, err = Exec("su", "-c", fmt.Sprintf("%s %s", path, pkg), user)
+	if err != nil {
+		log.Println(err)
+	}
 	return err == nil
 }
 

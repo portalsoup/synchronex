@@ -5,11 +5,13 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
-func CopyFile(src, dest string, overwrite bool) error {
+func CopyFile(src, dest string, overwrite bool, owner string, group string) error {
 	// Check if destination file already exists
 	if isFilePresent(dest) {
 		log.Printf("%s is already present\n", dest)
@@ -44,6 +46,21 @@ func CopyFile(src, dest string, overwrite bool) error {
 	if err != nil {
 		return err
 	}
+
+	// Set ownership of the new file
+	foundUser, err := user.Lookup(owner)
+	if err != nil {
+		return err
+	}
+	uid, err := strconv.Atoi(foundUser.Uid)
+	if err != nil {
+		return err
+	}
+	gid, err := strconv.Atoi(foundUser.Gid)
+	if err != nil {
+		return err
+	}
+	destFile.Chown(uid, gid)
 
 	// Flush any buffered data to ensure file is written completely
 	err = destFile.Sync()
