@@ -12,8 +12,8 @@ type Package struct {
 	AsUser string `hcl:"as_user,optional"`
 }
 
-func (p Package) Handler(defaultUser string) PackageHandler {
-	return PackageHandler{
+func (p Package) Handler(defaultUser string) PackageExecutor {
+	return PackageExecutor{
 		User:       defaultUser,
 		Pkg:        p,
 		FailOnSkip: false,
@@ -21,13 +21,13 @@ func (p Package) Handler(defaultUser string) PackageHandler {
 
 }
 
-type PackageHandler struct {
+type PackageExecutor struct {
 	User       string
 	Pkg        Package
 	FailOnSkip bool
 }
 
-func (p PackageHandler) Run() {
+func (p PackageExecutor) Run() {
 	switch p.Pkg.Action {
 	case "install":
 		p.Install()
@@ -39,17 +39,17 @@ func (p PackageHandler) Run() {
 	}
 }
 
-func (p PackageHandler) Install() {
+func (p PackageExecutor) Install() {
 	if provision.IsInstalled(p.Pkg, p.User) {
 		provision.Install(p.Pkg, p.User, p.FailOnSkip)
 	}
 }
 
-func (p PackageHandler) Remove() {
+func (p PackageExecutor) Remove() {
 	provision.Remove(p.Pkg)
 }
 
-func (p PackageHandler) Replace() {
+func (p PackageExecutor) Replace() {
 	provision.Remove(p.Pkg)
 	provision.Install(p.Pkg, p.User, p.FailOnSkip)
 }

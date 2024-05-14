@@ -2,15 +2,14 @@ package src
 
 import (
 	"fmt"
-	"github.com/hashicorp/hcl/v2/hclsimple"
 	"log"
 	"os"
 	"synchronex/src/hcl/schema"
 )
 
-func ProcessNexes(paths []string) {
-	// Parse nexes paths into provisioners
-	provisioners := readNexes(paths)
+func ProcessNexes(rawPaths []string) {
+	// Parse nexes rawPaths into provisioners
+	provisioners := readNexes(rawPaths)
 
 	errors := validateProvisioners(provisioners)
 	if len(errors) > 0 {
@@ -22,7 +21,7 @@ func ProcessNexes(paths []string) {
 
 	// If they are validated successfully, then proceed to execute
 	for _, provisioner := range provisioners {
-		ExecuteDocument(provisioner)
+		provisioner.Handler().Run()
 	}
 }
 
@@ -31,12 +30,12 @@ func IsRoot() bool {
 }
 
 func readNexes(nexes []string) []schema.Provisioner {
-	configs := make([]schema.Provisioner, len(nexes))
+	provisioners := make([]schema.Provisioner, len(nexes))
 	for i, nex := range nexes {
-		config := readDocument(nex).ProvisionerBlock
-		configs[i] = config
+		config := schema.ParseNexFile(nex).ProvisionerBlock
+		provisioners[i] = config
 	}
-	return configs
+	return provisioners
 }
 
 func validateProvisioners(provisioners []schema.Provisioner) []error {
@@ -56,13 +55,4 @@ func validateRootRequirement(doc schema.Provisioner) error {
 		return fmt.Errorf("The nex \"%s\" requires root\n", doc.Name)
 	}
 	return nil
-}
-
-func readDocument(file string) schema.Document {
-	var config schema.Document
-	err := hclsimple.DecodeFile(file, nil, &config)
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %s", err)
-	}
-	return config
 }

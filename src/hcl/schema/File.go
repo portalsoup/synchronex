@@ -24,13 +24,13 @@ type File struct {
 	Group string `hcl:"group,optional"`
 }
 
-func (f File) Handler(defaultUser string) FileHandler {
+func (f File) Handler(defaultUser string) FileExecutor {
 	sourceRaw, err := filepath.Abs(f.Source)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return FileHandler{
+	return FileExecutor{
 		File:        f,
 		Source:      template.ReplaceUser(defaultUser, sourceRaw),
 		Destination: template.ReplaceUser(defaultUser, f.Destination),
@@ -38,14 +38,14 @@ func (f File) Handler(defaultUser string) FileHandler {
 	}
 }
 
-type FileHandler struct {
+type FileExecutor struct {
 	File        File
 	Source      string
 	Destination string
 	BackupUser  string
 }
 
-func (f FileHandler) Run() {
+func (f FileExecutor) Run() {
 	switch f.File.Action {
 	case "put":
 		f.put(false)
@@ -56,7 +56,7 @@ func (f FileHandler) Run() {
 	}
 }
 
-func (f FileHandler) put(overwrite bool) {
+func (f FileExecutor) put(overwrite bool) {
 	log.Printf("About to write: %s")
 	copied := copyFile(f.File, f.Source, f.Destination, overwrite, f.BackupUser)
 	if copied {
@@ -66,7 +66,7 @@ func (f FileHandler) put(overwrite bool) {
 	}
 }
 
-func (f FileHandler) remove() {
+func (f FileExecutor) remove() {
 	log.Printf("About to delete: %s", f.Destination)
 	// pre script?
 	if filemanage.ValidateFileDoWork(f.Destination, false) {

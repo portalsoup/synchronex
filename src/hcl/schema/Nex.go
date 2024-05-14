@@ -1,5 +1,5 @@
 package schema
 
-type Document struct {
+type Nex struct {
 	ProvisionerBlock Provisioner `hcl:"provisioner,block"`
 }
