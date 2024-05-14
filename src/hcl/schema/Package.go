@@ -14,6 +14,7 @@ type Package struct {
 
 func (p Package) Handler(defaultUser string) PackageExecutor {
 	return PackageExecutor{
+		Package:    p,
 		User:       defaultUser,
 		Pkg:        p,
 		FailOnSkip: false,
@@ -22,6 +23,7 @@ func (p Package) Handler(defaultUser string) PackageExecutor {
 }
 
 type PackageExecutor struct {
+	Package    Package
 	User       string
 	Pkg        Package
 	FailOnSkip bool
@@ -40,16 +42,26 @@ func (p PackageExecutor) Run() {
 }
 
 func (p PackageExecutor) Install() {
-	if provision.IsInstalled(p.Pkg, p.User) {
-		provision.Install(p.Pkg, p.User, p.FailOnSkip)
+	if provision.IsInstalled(p.Pkg.Package, p.Pkg.PackageManager, p.User) {
+
+		user := p.Package.AsUser
+		if user == "" {
+			user = p.User
+		}
+		provision.Install(p.Pkg.Package, p.Pkg.PackageManager, user, p.FailOnSkip)
 	}
 }
 
 func (p PackageExecutor) Remove() {
-	provision.Remove(p.Pkg)
+	provision.Remove(p.Pkg.Package, p.Pkg.PackageManager)
 }
 
 func (p PackageExecutor) Replace() {
-	provision.Remove(p.Pkg)
-	provision.Install(p.Pkg, p.User, p.FailOnSkip)
+	user := p.Package.AsUser
+	if user == "" {
+		user = p.User
+	}
+
+	provision.Remove(p.Pkg.Package, p.Pkg.PackageManager)
+	provision.Install(p.Pkg.Package, p.Pkg.PackageManager, user, p.FailOnSkip)
 }

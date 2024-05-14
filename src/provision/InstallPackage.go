@@ -8,20 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"synchronex/src/hcl/schema"
 )
 
-func Install(pkg schema.Package, personalUser string, failOnSKip bool) {
-	packageName := pkg.Package
-	packageManager := pkg.PackageManager
-
-	var selectedUser string
-	if pkg.AsUser != "" {
-		selectedUser = pkg.AsUser
-	} else {
-		selectedUser = personalUser
-	}
-
+func Install(packageName, packageManager string, user string, failOnSKip bool) {
 	log.Printf("%s/%s slated for installation... checking requirements\n", packageName, packageManager)
 
 	// Ensure selected package manager exists on the system
@@ -35,36 +24,39 @@ func Install(pkg schema.Package, personalUser string, failOnSKip bool) {
 		}
 	}
 
-	if !install(packageName, packageManager, selectedUser) {
+	if !install(packageName, packageManager, user) {
 		log.Printf("%s installation failed\n", packageName)
 	}
 }
 
-func IsInstalled(pkg schema.Package, personalUser string) bool {
-	var selectedUser string
-	if pkg.AsUser != "" {
-		selectedUser = pkg.AsUser
-	} else {
-		selectedUser = personalUser
+func IsInstalled(packageName, packageManager string, user string) bool {
+	log.Printf("Checking if %s is installed by %s...", packageName, packageManager)
+	scriptPath := fmt.Sprintf("../expect/%s/check-installed.sh", packageManager)
+
+	path, err := filepath.Abs(scriptPath)
+	if err != nil {
+		log.Println(err)
 	}
 
-	return isInstalled(pkg.Package, pkg.PackageManager, selectedUser)
+	_, err = Exec("su", "-c", fmt.Sprintf("%s %s", path, packageName), user)
+	if err != nil {
+		log.Println(err)
+	}
+	return err == nil
 }
 
-func Remove(pkg schema.Package) {
-	log.Printf("%s slated for removal... checking requirements\n", pkg)
+func Remove(packageName, packageManager string) {
+	log.Printf("%s slated for removal... checking requirements\n", packageName)
 	distroName, distroErr := distroName()
 
 	if distroErr != nil {
 		log.Fatal(distroErr)
 	}
 
-	packageName := pkg.Package
-
 	if distroName == "Arch Linux" {
 		log.Println("Found arch linux... using pacman")
-		log.Printf("Removing package %s\n", pkg)
-		if remove(packageName, pkg.PackageManager) {
+		log.Printf("Removing package %s\n", packageName)
+		if remove(packageName, packageManager) {
 			log.Printf("%s removed Successfully")
 		} else {
 			log.Printf("%s encountered an error during removal!")
@@ -130,22 +122,6 @@ func install(pkg string, packageManager string, user string) bool {
 		log.Println(err)
 	}
 
-	return err == nil
-}
-
-func isInstalled(pkg string, pkgManager string, user string) bool {
-	log.Printf("Checking if %s is installed by %s...", pkg, pkgManager)
-	scriptPath := fmt.Sprintf("../expect/%s/check-installed.sh", pkgManager)
-
-	path, err := filepath.Abs(scriptPath)
-	if err != nil {
-		log.Println(err)
-	}
-
-	_, err = Exec("su", "-c", fmt.Sprintf("%s %s", path, pkg), user)
-	if err != nil {
-		log.Println(err)
-	}
 	return err == nil
 }
 
