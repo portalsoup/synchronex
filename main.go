@@ -4,30 +4,40 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"synchronex/src"
 	"synchronex/src/filemanage"
+	"synchronex/src/hcl/schema"
 )
 
 func main() {
-	log.Printf("Root check... %t\n", src.IsRoot())
-	var foundNexes []string
-	var err error
-
 	// Determine nexes finding strategy
+	foundNexes := findNexes()
+
+	// Parse nexes rawPaths into objects
+	nexes := schema.ParseNexFiles(foundNexes)
+
+	// Validate each nex
+	for _, nex := range nexes {
+		nex.Validate()
+	}
+	// If they are validated successfully, then proceed to execute
+	for _, nex := range nexes {
+		nex.ProvisionerBlock.Handler().Run()
+	}
+}
+
+func findNexes() []string {
 	if len(os.Args) > 1 {
-		foundNexes = os.Args[1:]
+		return os.Args[1:]
 	} else {
-		foundNexes, err = findNexesInWorkingDir()
+		foundNexes, err := getNexesInWorkingDir()
 		if err != nil {
 			log.Fatal(err)
 		}
+		return foundNexes
 	}
-
-	// Begin processing
-	src.ProcessNexes(foundNexes)
 }
 
-func findNexesInWorkingDir() ([]string, error) {
+func getNexesInWorkingDir() ([]string, error) {
 	ex, err := os.Executable()
 	if err != nil {
 		log.Fatal(err)

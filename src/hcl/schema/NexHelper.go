@@ -13,3 +13,12 @@ func ParseNexFile(path string) Nex {
 	}
 	return config
 }
+
+func ParseNexFiles(nexes []string) []Nex {
+	foundNexes := make([]Nex, len(nexes))
+	for i, nex := range nexes {
+		config := ParseNexFile(nex)
+		foundNexes[i] = config
+	}
+	return foundNexes
+}
