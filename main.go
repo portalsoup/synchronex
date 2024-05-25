@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"synchronex/src/filemanage"
-	"synchronex/src/hcl/schema"
+	"synchronex/src/hcl/nex"
 )
 
 func main() {
@@ -13,15 +13,15 @@ func main() {
 	foundNexes := findNexes()
 
 	// Parse nexes rawPaths into objects
-	nexes := schema.ParseNexFiles(foundNexes)
+	nexes := nex.ParseNexFiles(foundNexes)
 
 	// Validate each nex or fail
-	for _, nex := range nexes {
-		nex.Validate()
+	for _, n := range nexes {
+		n.Validate()
 	}
 	// If they are validated successfully, then proceed to execute
-	for _, nex := range nexes {
-		nex.Executor().Run()
+	for _, n := range nexes {
+		n.Executor().Run()
 	}
 }
 

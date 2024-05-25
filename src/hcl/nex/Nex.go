@@ -1,9 +1,10 @@
-package schema
+package nex
 
 import (
 	"fmt"
 	"log"
 	"os"
+	"synchronex/src/hcl/Provisioner"
 )
 
 type Nex struct {
@@ -13,7 +14,7 @@ type Nex struct {
 	Upgrade      bool   `hcl:"upgrade_system,optional"`
 	PersonalUser string `hcl:"user"`
 
-	ProvisionerBlock Provisioner `hcl:"provisioner,block"`
+	ProvisionerBlock Provisioner.Provisioner `hcl:"provisioner,block"`
 }
 
 func (n Nex) Executor() NexExecutor {

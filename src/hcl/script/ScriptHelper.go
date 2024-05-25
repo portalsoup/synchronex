@@ -1,4 +1,4 @@
-package schema
+package script
 
 import (
 	"log"

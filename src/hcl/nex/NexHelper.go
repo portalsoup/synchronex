@@ -1,4 +1,4 @@
-package schema
+package nex
 
 import (
 	"github.com/hashicorp/hcl/v2/hclsimple"

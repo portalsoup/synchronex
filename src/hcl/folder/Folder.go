@@ -1,4 +1,4 @@
-package schema
+package folder
 
 type Folder struct {
 	// "put" copy if not present

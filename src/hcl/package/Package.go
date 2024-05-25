@@ -1,6 +1,8 @@
-package schema
+package _package
 
-import "synchronex/src/provision"
+import (
+	"synchronex/src/provision"
+)
 
 type Package struct {
 	PackageManager string `hcl:"type,label"`

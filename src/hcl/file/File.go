@@ -1,10 +1,10 @@
-package schema
+package file
 
 import (
 	"log"
 	"path/filepath"
 	"synchronex/src/filemanage"
-	"synchronex/src/hcl/template"
+	"synchronex/src/template"
 )
 
 type File struct {

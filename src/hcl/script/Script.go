@@ -1,4 +1,4 @@
-package schema
+package script
 
 type Script struct {
 	Type string `hcl:"type,label"`
