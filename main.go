@@ -38,10 +38,10 @@ func findNexes() []string {
 }
 
 func getNexesInWorkingDir() ([]string, error) {
-	ex, err := os.Executable()
+	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
-	exPath := filepath.Dir(ex)
-	return filemanage.FindChildren(exPath)
+	path := filepath.Dir(dir)
+	return filemanage.FindChildren(path)
 }
