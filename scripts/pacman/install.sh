@@ -6,7 +6,7 @@ set timeout 300
 set package_name [lindex $argv 0]
 
 # Define the command to install the package
-set install_command "pacman -S $package_name"
+set install_command "pacman -S $package_name --noconfirm"
 
 # Spawn a shell
 spawn /bin/bash

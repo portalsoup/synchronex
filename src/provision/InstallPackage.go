@@ -31,7 +31,7 @@ func Install(packageName, packageManager string, user string, failOnSKip bool) {
 
 func IsInstalled(packageName, packageManager string, user string) bool {
 	log.Printf("Checking if %s is installed by %s...", packageName, packageManager)
-	scriptPath := fmt.Sprintf("../expect/%s/check-installed.sh", packageManager)
+	scriptPath := fmt.Sprintf("../scripts/%s/check-installed.sh", packageManager)
 
 	path, err := filepath.Abs(scriptPath)
 	if err != nil {
@@ -39,9 +39,7 @@ func IsInstalled(packageName, packageManager string, user string) bool {
 	}
 
 	_, err = Exec("su", "-c", fmt.Sprintf("%s %s", path, packageName), user)
-	if err != nil {
-		log.Println(err)
-	}
+
 	return err == nil
 }
 
@@ -109,13 +107,13 @@ func isPackageManagerInstalled(pkgManager string) bool {
 
 func install(pkg string, packageManager string, user string) bool {
 	log.Printf("Installing as %s... %s\n", user, pkg)
-	expectPath := fmt.Sprintf("../expect/%s/install.sh", packageManager)
-	path, err := filepath.Abs(expectPath)
+	scriptsPath := fmt.Sprintf("../scripts/%s/install.sh", packageManager)
+	path, err := filepath.Abs(scriptsPath)
 	if err != nil {
 		log.Println(err)
 	}
 
-	// Execute expect script
+	// Execute script
 	_, err = Exec("su", "-c", fmt.Sprintf("%s %s", path, pkg), user)
 
 	if err != nil {
@@ -128,8 +126,8 @@ func install(pkg string, packageManager string, user string) bool {
 func remove(pkg string, packageManager string) bool {
 	log.Printf("Removing... %s\n", pkg)
 	log.Printf("Installing... %s\n", pkg)
-	expectPath := fmt.Sprintf("../expect/%s/remove.sh", packageManager)
-	path, err := filepath.Abs(expectPath)
+	scriptsPath := fmt.Sprintf("../scripts/%s/remove.sh", packageManager)
+	path, err := filepath.Abs(scriptsPath)
 	if err != nil {
 		log.Println(err)
 	}
@@ -153,7 +151,7 @@ func pacmanSync() bool {
 }
 
 func pacmanUpdate() bool {
-	path, err := filepath.Abs("../expect/pacman/update.sh")
+	path, err := filepath.Abs("../scripts/pacman/update.sh")
 	if err != nil {
 		log.Println(err)
 	}
@@ -196,4 +194,10 @@ func distroName() (string, error) {
 
 	// Return an error if distribution information not found
 	return "", errors.New("distribution information not found")
+}
+
+func isSudoBlocked() bool {
+	_, err := Exec("echo", "Whispering winds of sudo, reveal your secrets", "|", "sudo", "-S", "-v", "2>/dev/null")
+
+	return err == nil
 }

@@ -62,11 +62,11 @@ func Exec(arg ...string) (*exec.Cmd, error) {
 	go keyboardListener(stdin)
 
 	// Wait for the command to finish
-	if err := cmd.Wait(); err != nil {
-		log.Fatal("Error waiting for command:", err)
-	}
+	//if err := cmd.Wait(); err != nil {
+	//	log.Fatal("Error waiting for command:", err)
+	//}
 
-	return cmd, nil
+	return cmd, cmd.Wait()
 }
 
 func keyboardListener(stdin io.WriteCloser) {

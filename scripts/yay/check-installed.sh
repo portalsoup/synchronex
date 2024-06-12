@@ -1,3 +1,3 @@
 #! /usr/bin/env sh
 
-pacman -Q $1
+yay -Q "$1"

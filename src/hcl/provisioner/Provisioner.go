@@ -1,11 +1,10 @@
-package Provisioner
+package provisioner
 
 import (
 	"synchronex/src/hcl/file"
 	"synchronex/src/hcl/folder"
 	"synchronex/src/hcl/package"
 	"synchronex/src/hcl/script"
-	"synchronex/src/provision"
 )
 
 type Provisioner struct {
@@ -29,15 +28,7 @@ type ProvisionExecutor struct {
 	User        string
 }
 
-func (p ProvisionExecutor) Run(sync, upgrade bool) {
-	// System-level stuff
-	if sync {
-		provision.Sync()
-	}
-	if upgrade {
-		provision.Upgrade()
-	}
-
+func (p ProvisionExecutor) Run() {
 	// Packages
 	for _, pkg := range p.Provisioner.PackagesBlocks {
 		pkg.Executor(p.User).Run()
