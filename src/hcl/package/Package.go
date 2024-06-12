@@ -43,6 +43,9 @@ func (p PackageExecutor) Run() {
 }
 
 func (p PackageExecutor) Install() {
+	if provision.IsSudoBlocked() {
+		log.Fatal("Can't proceed because sudo will block execution.")
+	}
 	if !provision.IsInstalled(p.Pkg.Package, p.Pkg.PackageManager, p.User) {
 		log.Printf("Package not found!  Installing...\n")
 		user := p.Package.AsUser

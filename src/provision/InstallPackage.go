@@ -100,6 +100,12 @@ func Sync() {
 	}
 }
 
+func IsSudoBlocked() bool {
+	_, err := Exec("echo", "Whispering winds of sudo, reveal your secrets", "|", "sudo", "-S", "-v", "2>/dev/null")
+
+	return err == nil
+}
+
 func isPackageManagerInstalled(pkgManager string) bool {
 	_, err := Exec("which", pkgManager)
 	return err == nil
@@ -194,10 +200,4 @@ func distroName() (string, error) {
 
 	// Return an error if distribution information not found
 	return "", errors.New("distribution information not found")
-}
-
-func isSudoBlocked() bool {
-	_, err := Exec("echo", "Whispering winds of sudo, reveal your secrets", "|", "sudo", "-S", "-v", "2>/dev/null")
-
-	return err == nil
 }
