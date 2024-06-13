@@ -34,13 +34,15 @@ func (f File) Executor(defaultUser string) FileExecutor {
 		user = defaultUser
 	}
 
+	templateConfig := template.Template{User: user}
+
 	return FileExecutor{
 		File:        f,
-		Source:      template.ReplaceUser(user, sourceRaw),
-		Destination: template.ReplaceUser(user, f.Destination),
+		Source:      templateConfig.Replace(sourceRaw),
+		Destination: templateConfig.Replace(f.Destination),
 		User:        user,
-		Pre:         template.ReplaceUser(user, f.PreCommand),
-		Post:        template.ReplaceUser(user, f.PostCommand),
+		Pre:         templateConfig.Replace(f.PreCommand),
+		Post:        templateConfig.Replace(f.PostCommand),
 	}
 }
 

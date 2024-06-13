@@ -1,15 +1,25 @@
 package template
 
 import (
+	"reflect"
 	"strings"
 )
 
-const (
-	User = "{{USER}}"
-)
+type Template struct {
+	User string `token:"{{USER}}"`
+}
 
-// ReplaceUser for mustache template variables
-func ReplaceUser(user, statement string) string {
-	replaced := strings.Replace(statement, User, user, -1)
-	return replaced
+func (t Template) Replace(statement string) string {
+	val := reflect.ValueOf(t)
+	typ := reflect.TypeOf(t)
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		tag := typ.Field(i).Tag.Get("token")
+		if tag != "" {
+			statement = strings.Replace(statement, tag, field.String(), -1)
+		}
+	}
+
+	return statement
 }
