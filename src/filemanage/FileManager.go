@@ -38,7 +38,7 @@ func CopyFile(src, dest string, overwrite bool, owner string, group string) erro
 	defer closeFile(destFile)
 
 	if err != nil {
-		log.Printf("Failed to create dest file %s\n", src)
+		log.Printf("Failed to create dest file %s\n", dest)
 		return err
 	}
 	// Copy the content from source to destination
@@ -119,6 +119,13 @@ func closeFile(file *os.File) {
 
 func createFile(file string) (*os.File, error) {
 	log.Printf("Creating the file at %s\n", file)
+
+	// Ensure parent directories exist
+	err := os.MkdirAll(filepath.Dir(file), 0755)
+	if err != nil {
+		panic(err)
+	}
+
 	createdFile, err := os.Create(file)
 	if err != nil {
 		return createdFile, err
