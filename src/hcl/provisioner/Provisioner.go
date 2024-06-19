@@ -34,9 +34,9 @@ func (p ProvisionExecutor) Run() {
 	log.Println("***********************")
 	p.runPackages()
 
-	log.Println("********************")
-	log.Println("* Validating Files *")
-	log.Println("********************")
+	log.Println("****************")
+	log.Println("* Moving Files *")
+	log.Println("****************")
 	p.runFiles()
 
 }
