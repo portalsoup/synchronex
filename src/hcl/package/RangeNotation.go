@@ -2,98 +2,99 @@ package _package
 
 import (
 	"fmt"
-	"github.com/blang/semver/v4"
+	"log"
 	"strings"
 )
 
-// parseRange parses the Maven range notation and returns the corresponding semver.Range function.
-func parseRange(rangeStr string) (semver.Range, error) {
-	rangeStr = strings.TrimSpace(rangeStr)
-	if rangeStr == "" {
-		return nil, fmt.Errorf("empty range string")
-	}
-
-	var constraints []semver.Range
-
-	// Split the range string by comma to handle multiple conditions
-	parts := strings.Split(rangeStr, ",")
-
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-
-		var constraint semver.Range
-		var err error
-
-		switch {
-		case strings.HasPrefix(part, "[") && strings.HasSuffix(part, "]"):
-			versions := strings.Split(part[1:len(part)-1], ",")
-			if len(versions) == 2 {
-				constraint, err = semver.ParseRange(fmt.Sprintf(">=%s <=%s", versions[0], versions[1]))
-			} else {
-				return nil, fmt.Errorf("invalid range format: %s", part)
-			}
-		case strings.HasPrefix(part, "[") && strings.HasSuffix(part, ")"):
-			versions := strings.Split(part[1:len(part)-1], ",")
-			if len(versions) == 2 {
-				constraint, err = semver.ParseRange(fmt.Sprintf(">=%s <%s", versions[0], versions[1]))
-			} else {
-				return nil, fmt.Errorf("invalid range format: %s", part)
-			}
-		case strings.HasPrefix(part, "(") && strings.HasSuffix(part, "]"):
-			versions := strings.Split(part[1:len(part)-1], ",")
-			if len(versions) == 2 {
-				constraint, err = semver.ParseRange(fmt.Sprintf(">%s <=%s", versions[0], versions[1]))
-			} else {
-				return nil, fmt.Errorf("invalid range format: %s", part)
-			}
-		case strings.HasPrefix(part, "(") && strings.HasSuffix(part, ")"):
-			versions := strings.Split(part[1:len(part)-1], ",")
-			if len(versions) == 2 {
-				constraint, err = semver.ParseRange(fmt.Sprintf(">%s <%s", versions[0], versions[1]))
-			} else {
-				return nil, fmt.Errorf("invalid range format: %s", part)
-			}
-		default:
-			return nil, fmt.Errorf("invalid range format: %s", part)
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		constraints = append(constraints, constraint)
-	}
-
-	// Combine all constraints using semver.RangeAnd
-	return semver.RangeAnd(constraints...), nil
+type Boundary struct {
+	Version   string
+	Inclusive bool
 }
 
-// isVersionInRange checks if a given version is within the specified Maven range.
-func isVersionInRange(version, rangeStr string) (bool, error) {
-	v, err := semver.Parse(version)
-	if err != nil {
-		return false, err
-	}
-
-	r, err := parseRange(rangeStr)
-	if err != nil {
-		return false, err
-	}
-
-	return r(v), nil
+type Range struct {
+	Start Boundary
+	End   Boundary
 }
 
-func main() {
-	version := "1.2.3"
-	rangeStr := "[1.0.0,2.0.0)"
+func (r Range) IsInRange(version string) {
+	if !r.isInRange(version) {
+		log.Fatalf("A package failed validation:\n%s ~ %s ~ %s\n", r.Start.Version, version, r.End.Version)
+	}
+}
 
-	inRange, err := isVersionInRange(version, rangeStr)
-	if err != nil {
-		fmt.Println("Error:", err)
+func (r Range) isInRange(version string) bool {
+	if r.Start.Version != "" {
+		if r.Start.Inclusive {
+			if version < r.Start.Version {
+				return false
+			}
+		} else {
+			if version <= r.Start.Version {
+				return false
+			}
+		}
+	}
+
+	if r.End.Version != "" {
+		if r.End.Inclusive {
+			if r.End.Version < version {
+				return false
+			}
+		} else {
+			if r.End.Version <= version {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func tokenizeBoundary(boundaryStr string) (Boundary, error) {
+	boundaryStr = strings.TrimSpace(boundaryStr)
+
+	var b Boundary
+
+	// Determine if the boundary is inclusive or exclusive
+	if boundaryStr[0] == '[' || boundaryStr[0] == '(' {
+		b.Inclusive = boundaryStr[0] == '['
+		b.Version = boundaryStr[1:] // Remove the first character
+	} else if boundaryStr[len(boundaryStr)-1] == ']' || boundaryStr[len(boundaryStr)-1] == ')' {
+		b.Inclusive = boundaryStr[len(boundaryStr)-1] == ']'
+		b.Version = boundaryStr[:len(boundaryStr)-1] // Remove the last character
 	} else {
-		fmt.Printf("Version %s in range %s: %v\n", version, rangeStr, inRange)
+		return Boundary{}, fmt.Errorf("invalid boundary string: %s", boundaryStr)
 	}
+
+	return b, nil
+}
+
+// TokenizeRange parses a Maven range notation string into an array of Range structs.
+func TokenizeRange(rangeStr string) ([]Range, error) {
+
+	var ranges []Range
+
+	// Split the range string by comma to handle multiple range specifications
+	rawBoundaries := strings.Split(rangeStr, ",")
+
+	if len(rawBoundaries)%2 != 0 {
+		return []Range{}, fmt.Errorf("Invalid range string: %s", Boundary{})
+	}
+
+	for i := 0; i < len(rawBoundaries); i += 2 {
+		start, err := tokenizeBoundary(rawBoundaries[i])
+		if err != nil {
+			return ranges, err
+		}
+		end, err := tokenizeBoundary(rawBoundaries[i+1])
+		if err != nil {
+			return ranges, err
+		}
+		r := Range{
+			Start: start,
+			End:   end,
+		}
+		ranges = append(ranges, r)
+	}
+
+	return ranges, nil
 }
