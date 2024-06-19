@@ -41,8 +41,8 @@ type PackageExecutor struct {
 	VersionRange   string
 }
 
-func (p PackageExecutor) Run() {
-	p.checkVersion()
+func (p PackageExecutor) Run() bool {
+	return p.checkVersion()
 }
 
 func (p PackageExecutor) checkVersion() bool {
