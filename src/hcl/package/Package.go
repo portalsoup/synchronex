@@ -12,7 +12,7 @@ type Package struct {
 
 	// Supported package managers
 	Pacman bool `hcl:"pacman,optional"`
-	Apt    bool `hcl:"apt,optional"`
+	Dpkg   bool `hcl:"dpkg,optional"`
 
 	VersionCommand string `hcl:"version_command,optional"`
 	VersionPattern string `hcl:"version_pattern,optional"`
