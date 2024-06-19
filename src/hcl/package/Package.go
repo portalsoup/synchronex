@@ -59,18 +59,81 @@ func (p PackageExecutor) checkVersion() bool {
 	return pacmanSuccess || aptSuccess
 }
 
+func checkPacmanVersion(p PackageExecutor) {
+	// Check if the package is installed
+	cmdCheck := exec.Command("pacman", "-Qi", p.Package.Name)
+	outputCheck, err := cmdCheck.Output()
+	if err != nil {
+		log.Printf("Error running command or package not installed: %v", err)
+		return
+	}
+
+	// Extract the version information
+	cmdGrep := exec.Command("grep", "Version")
+	cmdGrep.Stdin = strings.NewReader(string(outputCheck))
+	outputGrep, err := cmdGrep.Output()
+	if err != nil {
+		log.Printf("Error extracting version information: %v", err)
+		return
+	}
+
+	cmdAwk := exec.Command("awk", "{print $3}")
+	cmdAwk.Stdin = strings.NewReader(string(outputGrep))
+	rawVersion, err := cmdAwk.Output()
+	if err != nil {
+		log.Printf("Error extracting version number: %v", err)
+		return
+	}
+
+	version := strings.TrimSpace(string(rawVersion))
+	if version == "" {
+		log.Printf("Package %s is not installed.", p.Package.Name)
+		return
+	}
+
+	ranges, err := TokenizeRange(p.VersionRange)
+	if err != nil {
+		log.Printf("Error tokenizing version range: %v", err)
+		return
+	}
+
+	log.Printf("Validating %s=%s", p.Package.Name, version)
+	for _, aRange := range ranges {
+		if !aRange.IsInRange(version) {
+			log.Println("[Error] Version mismatch! Expected:")
+			rangeVersionMismatchMessage(aRange, version)
+		}
+	}
+}
+
 func pacmanCheckVersion(p PackageExecutor) bool {
-	innerCommand := fmt.Sprintf("pacman -Qi %s | grep 'Version' | awk '{print $3}'", p.Package.Name)
-	cmd := exec.Command("bash", "-c", innerCommand)
-	rawVersion, _ := cmd.Output()
-	if cmd.ProcessState.ExitCode() == 1 {
+	cmdVersion := exec.Command("pacman", "-Qi", p.Package.Name)
+	outputVersion, err := cmdVersion.Output()
+	if cmdVersion.ProcessState.ExitCode() == 1 {
 		log.Printf("Missing     %s", p.Package.Name)
 		return false
 	}
 
-	ranges, _ := TokenizeRange(p.VersionRange)
+	// Extract the version information
+	cmdGrep := exec.Command("grep", "Version")
+	cmdGrep.Stdin = strings.NewReader(string(outputVersion))
+	outputGrep, err := cmdGrep.Output()
+	if err != nil {
+		log.Printf("Error extracting version information: %v", err)
+		return false
+	}
 
+	cmdAwk := exec.Command("awk", "{print $3}")
+	cmdAwk.Stdin = strings.NewReader(string(outputGrep))
+	rawVersion, err := cmdAwk.Output()
+	if err != nil {
+		log.Printf("Error extracting version number: %v", err)
+		return false
+	}
+
+	ranges, _ := TokenizeRange(p.VersionRange)
 	version := strings.TrimSpace(string(rawVersion))
+
 	for _, aRange := range ranges {
 		log.Printf("Validated   %s=%s", p.Package.Name, version)
 		if !aRange.IsInRange(version) {
