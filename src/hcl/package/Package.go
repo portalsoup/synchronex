@@ -19,11 +19,11 @@ type Package struct {
 	VersionRange   string `hcl:"constraints,optional"`
 }
 
-func (p Package) Executor(usePacman, useApt bool) PackageExecutor {
+func (p Package) Executor(pacmanInstalled, dpkgInstalled bool) PackageExecutor {
 	return PackageExecutor{
 		Package:        p,
-		Pacman:         usePacman,
-		Apt:            useApt,
+		Pacman:         pacmanInstalled && p.Pacman,
+		Dpkg:           dpkgInstalled && p.Dpkg,
 		VersionCommand: p.VersionCommand,
 		VersionPattern: p.VersionPattern,
 		VersionRange:   p.VersionRange,
@@ -34,7 +34,7 @@ type PackageExecutor struct {
 	Package Package
 
 	Pacman bool
-	Apt    bool
+	Dpkg   bool
 
 	VersionCommand string
 	VersionPattern string
@@ -52,58 +52,11 @@ func (p PackageExecutor) checkVersion() bool {
 		pacmanSuccess = pacmanCheckVersion(p)
 	}
 
-	if p.Apt {
+	if p.Dpkg {
 		aptSuccess = aptCheckVersion(p)
 	}
 
 	return pacmanSuccess || aptSuccess
-}
-
-func checkPacmanVersion(p PackageExecutor) {
-	// Check if the package is installed
-	cmdCheck := exec.Command("pacman", "-Qi", p.Package.Name)
-	outputCheck, err := cmdCheck.Output()
-	if err != nil {
-		log.Printf("Error running command or package not installed: %v", err)
-		return
-	}
-
-	// Extract the version information
-	cmdGrep := exec.Command("grep", "Version")
-	cmdGrep.Stdin = strings.NewReader(string(outputCheck))
-	outputGrep, err := cmdGrep.Output()
-	if err != nil {
-		log.Printf("Error extracting version information: %v", err)
-		return
-	}
-
-	cmdAwk := exec.Command("awk", "{print $3}")
-	cmdAwk.Stdin = strings.NewReader(string(outputGrep))
-	rawVersion, err := cmdAwk.Output()
-	if err != nil {
-		log.Printf("Error extracting version number: %v", err)
-		return
-	}
-
-	version := strings.TrimSpace(string(rawVersion))
-	if version == "" {
-		log.Printf("Package %s is not installed.", p.Package.Name)
-		return
-	}
-
-	ranges, err := TokenizeRange(p.VersionRange)
-	if err != nil {
-		log.Printf("Error tokenizing version range: %v", err)
-		return
-	}
-
-	log.Printf("Validating %s=%s", p.Package.Name, version)
-	for _, aRange := range ranges {
-		if !aRange.IsInRange(version) {
-			log.Println("[Error] Version mismatch! Expected:")
-			rangeVersionMismatchMessage(aRange, version)
-		}
-	}
 }
 
 func pacmanCheckVersion(p PackageExecutor) bool {

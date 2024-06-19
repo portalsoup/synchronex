@@ -42,19 +42,19 @@ func (p ProvisionExecutor) Run() {
 }
 
 func (p ProvisionExecutor) runPackages() {
-	usePacman := isPacmanInstalled()
-	useApt := isAptInstalled()
+	pacmanInstalled := isPacmanInstalled()
+	dpkgInstalled := isAptInstalled()
 
-	if usePacman {
+	if pacmanInstalled {
 		log.Printf("Found pacman...")
 	}
-	if useApt {
+	if dpkgInstalled {
 		log.Printf("Found apt-get...")
 	}
 
 	failedPackages := false
 	for _, packagesBlock := range p.Provisioner.PackagesBlocks {
-		result := packagesBlock.Executor(usePacman, useApt).Run()
+		result := packagesBlock.Executor(pacmanInstalled, dpkgInstalled).Run()
 		if !result {
 			failedPackages = true
 		}

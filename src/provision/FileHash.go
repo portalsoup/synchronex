@@ -9,7 +9,9 @@ import (
 
 func GetFileChecksum(filepath string) (string, error) {
 	file, err := os.Open(filepath)
-	if err != nil {
+	if err != nil && os.IsNotExist(err) {
+		return "", nil
+	} else if err != nil {
 		return "", err
 	}
 	defer file.Close()
