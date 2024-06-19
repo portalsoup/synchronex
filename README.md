@@ -102,7 +102,7 @@ provisioner "setup_zsh" {
   }
 
   file sync "/home/{{USER}}/.zshrc" {
-    src = "resources/zsh/zshrc.zsh"
+    src = "resources/.zshrc"
   }
 }
 
