@@ -29,6 +29,19 @@ type ProvisionExecutor struct {
 }
 
 func (p ProvisionExecutor) Run() {
+	log.Println("***********************")
+	log.Println("* Validating Packages *")
+	log.Println("***********************")
+	p.runPackages()
+
+	log.Println("********************")
+	log.Println("* Validating Files *")
+	log.Println("********************")
+	p.runFiles()
+
+}
+
+func (p ProvisionExecutor) runPackages() {
 	usePacman := isPacmanInstalled()
 	useApt := isAptInstalled()
 
@@ -50,11 +63,12 @@ func (p ProvisionExecutor) Run() {
 	if failedPackages {
 		log.Fatal("Some packages did not meet requirements!  Exiting.")
 	}
+}
 
+func (p ProvisionExecutor) runFiles() {
 	for _, filesBlock := range p.Provisioner.FilesBlocks {
 		filesBlock.Executor(p.User).Run()
 	}
-
 }
 
 func isPacmanInstalled() bool {
