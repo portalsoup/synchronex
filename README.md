@@ -97,7 +97,6 @@ user = "myuser"
 provisioner "setup_zsh" {
 
   package "zsh" {
-    pacman = true
     dpkg = true
     constraints = "[5, )" # require zsh major version 5 or greater
   }
