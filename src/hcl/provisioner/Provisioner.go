@@ -39,9 +39,12 @@ func (p ProvisionExecutor) Run() {
 		log.Printf("Found apt-get...")
 	}
 
-	var failedPackages bool
+	failedPackages := false
 	for _, packagesBlock := range p.Provisioner.PackagesBlocks {
-		failedPackages = packagesBlock.Executor(usePacman, useApt).Run() && true // once false it stays false
+		result := packagesBlock.Executor(usePacman, useApt).Run()
+		if !result {
+			failedPackages = true
+		}
 	}
 
 	if failedPackages {

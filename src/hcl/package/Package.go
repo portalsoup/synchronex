@@ -62,9 +62,9 @@ func (p PackageExecutor) checkVersion() bool {
 func pacmanCheckVersion(p PackageExecutor) bool {
 	innerCommand := fmt.Sprintf("pacman -Qi %s | grep 'Version' | awk '{print $3}'", p.Package.Name)
 	cmd := exec.Command("bash", "-c", innerCommand)
-	rawVersion, err := cmd.Output()
-	if err != nil {
-		log.Printf("Error running command: %v", err)
+	rawVersion, _ := cmd.Output()
+	if cmd.ProcessState.ExitCode() == 1 {
+		log.Printf("Missing     %s", p.Package.Name)
 		return false
 	}
 
@@ -72,10 +72,9 @@ func pacmanCheckVersion(p PackageExecutor) bool {
 
 	version := strings.TrimSpace(string(rawVersion))
 	for _, aRange := range ranges {
-		log.Printf("Validating %s=%s", p.Package.Name, version)
+		log.Printf("Validated   %s=%s", p.Package.Name, version)
 		if !aRange.IsInRange(version) {
-			log.Println("[Error] Version mismatch!  Expected:")
-			log.Println(rangeVersionMismatchMessage(aRange, version))
+			log.Printf("Bad Version %s\t %s", p.Package.Name, rangeVersionMismatchMessage(aRange, version))
 			return false
 		}
 	}
@@ -83,12 +82,12 @@ func pacmanCheckVersion(p PackageExecutor) bool {
 }
 
 func aptCheckVersion(p PackageExecutor) bool {
-	innerCommand := fmt.Sprintf("apt-cache show %s | grep 'Version' | awk '{print $2}'", p.Package.Name)
+	innerCommand := fmt.Sprintf("dpkg-query -W -f='${Version}' %s", p.Package.Name)
 	cmd := exec.Command("bash", "-c", innerCommand)
 
-	rawVersion, err := cmd.Output()
-	if err != nil {
-		log.Printf("Error running command: %v", err)
+	rawVersion, _ := cmd.Output()
+	if cmd.ProcessState.ExitCode() == 1 {
+		log.Printf("Missing     %s", p.Package.Name)
 		return false
 	}
 
@@ -96,10 +95,9 @@ func aptCheckVersion(p PackageExecutor) bool {
 
 	version := strings.TrimSpace(string(rawVersion))
 	for _, aRange := range ranges {
-		log.Printf("Validating %s=%s", p.Package.Name, version)
+		log.Printf("Validated   %s=%s", p.Package.Name, version)
 		if !aRange.IsInRange(version) {
-			log.Println("[Error] Version mismatch!  Expected:")
-			log.Println(rangeVersionMismatchMessage(aRange, version))
+			log.Printf("Bad Version %s --- %s", p.Package.Name, rangeVersionMismatchMessage(aRange, version))
 			return false
 		}
 	}
@@ -129,5 +127,5 @@ func rangeVersionMismatchMessage(aRange Range, version string) string {
 		logMsg += " " + endOperand + " " + aRange.End.Version
 	}
 
-	return "\t" + logMsg
+	return logMsg
 }
