@@ -8,56 +8,105 @@ import (
 )
 
 type Package struct {
-	// "put" copy if not present
-	// "sync" unconditionally replace with current version
-	// "remove" delete the file at the dest
-	PackageManager string `hcl:"type,label"`
-	Name           string `hcl:"name,label"`
+	Name string `hcl:"type,label"`
 
-	// If this file is to be copied, then it must have a source
+	// Supported package managers
+	Pacman bool `hcl:"pacman,optional"`
+	Apt    bool `hcl:"apt,optional"`
+
 	VersionCommand string `hcl:"version_command,optional"`
 	VersionPattern string `hcl:"version_pattern,optional"`
-	VersionRange   string `hcl:"range,optional"`
+	VersionRange   string `hcl:"constraints,optional"`
 }
 
-func (p Package) Executor() PackageExecutor {
+func (p Package) Executor(usePacman, useApt bool) PackageExecutor {
 	return PackageExecutor{
-		Package: p,
+		Package:        p,
+		Pacman:         usePacman,
+		Apt:            useApt,
+		VersionCommand: p.VersionCommand,
+		VersionPattern: p.VersionPattern,
+		VersionRange:   p.VersionRange,
 	}
 }
 
 type PackageExecutor struct {
 	Package Package
+
+	Pacman bool
+	Apt    bool
+
+	VersionCommand string
+	VersionPattern string
+	VersionRange   string
 }
 
 func (p PackageExecutor) Run() {
-	p.Package.checkVersion()
+	p.checkVersion()
 }
 
-func (p Package) checkVersion() {
-	switch p.PackageManager {
-	case "pacman":
-		checkPacmanVersion(p)
+func (p PackageExecutor) checkVersion() bool {
+	var pacmanSuccess bool
+	var aptSuccess bool
+	if p.Pacman {
+		pacmanSuccess = pacmanCheckVersion(p)
 	}
+
+	if p.Apt {
+		aptSuccess = aptCheckVersion(p)
+	}
+
+	return pacmanSuccess || aptSuccess
 }
 
-func checkPacmanVersion(p Package) {
-	innerCommand := fmt.Sprintf("pacman -Qi %s | grep 'Version' | awk '{print $3}'", p.Name)
+func pacmanCheckVersion(p PackageExecutor) bool {
+	innerCommand := fmt.Sprintf("pacman -Qi %s | grep 'Version' | awk '{print $3}'", p.Package.Name)
 	cmd := exec.Command("bash", "-c", innerCommand)
-	rawVersion, _ := cmd.Output()
+	rawVersion, err := cmd.Output()
+	if err != nil {
+		log.Printf("Error running command: %v", err)
+		return false
+	}
+
 	ranges, _ := TokenizeRange(p.VersionRange)
 
 	version := strings.TrimSpace(string(rawVersion))
 	for _, aRange := range ranges {
-		log.Printf("Validating %s=%s", p.Name, version)
+		log.Printf("Validating %s=%s", p.Package.Name, version)
 		if !aRange.IsInRange(version) {
 			log.Println("[Error] Version mismatch!  Expected:")
-			rangeVersionMismatchMessage(aRange, version)
+			log.Println(rangeVersionMismatchMessage(aRange, version))
+			return false
 		}
 	}
+	return true
 }
 
-func rangeVersionMismatchMessage(aRange Range, version string) {
+func aptCheckVersion(p PackageExecutor) bool {
+	innerCommand := fmt.Sprintf("apt-cache show %s | grep 'Version' | awk '{print $2}'", p.Package.Name)
+	cmd := exec.Command("bash", "-c", innerCommand)
+
+	rawVersion, err := cmd.Output()
+	if err != nil {
+		log.Printf("Error running command: %v", err)
+		return false
+	}
+
+	ranges, _ := TokenizeRange(p.VersionRange)
+
+	version := strings.TrimSpace(string(rawVersion))
+	for _, aRange := range ranges {
+		log.Printf("Validating %s=%s", p.Package.Name, version)
+		if !aRange.IsInRange(version) {
+			log.Println("[Error] Version mismatch!  Expected:")
+			log.Println(rangeVersionMismatchMessage(aRange, version))
+			return false
+		}
+	}
+	return true
+}
+
+func rangeVersionMismatchMessage(aRange Range, version string) string {
 	startOperand := "<"
 	endOperand := ">"
 
@@ -80,5 +129,5 @@ func rangeVersionMismatchMessage(aRange Range, version string) {
 		logMsg += " " + endOperand + " " + aRange.End.Version
 	}
 
-	log.Fatalf("\t" + logMsg)
+	return "\t" + logMsg
 }
