@@ -48,9 +48,37 @@ func checkPacmanVersion(p Package) {
 	ranges, _ := TokenizeRange(p.VersionRange)
 
 	version := strings.TrimSpace(string(rawVersion))
-	for _, v := range ranges {
-		log.Printf("Validating %s\n", p.Name)
-		v.IsInRange(version)
+	for _, aRange := range ranges {
+		log.Printf("Validating %s=%s", p.Name, version)
+		if !aRange.IsInRange(version) {
+			log.Println("[Error] Version mismatch!  Expected:")
+			rangeVersionMismatchMessage(aRange, version)
+		}
 	}
-	log.Printf("%s was found and valid", p.Name)
+}
+
+func rangeVersionMismatchMessage(aRange Range, version string) {
+	startOperand := "<"
+	endOperand := ">"
+
+	if aRange.Start.Inclusive {
+		startOperand += "="
+	}
+	if aRange.End.Inclusive {
+		endOperand += "="
+	}
+
+	logMsg := ""
+
+	if aRange.Start.Version != "" {
+		logMsg += aRange.Start.Version + " " + startOperand + " "
+	}
+
+	logMsg += version
+
+	if aRange.End.Version != "" {
+		logMsg += " " + endOperand + " " + aRange.End.Version
+	}
+
+	log.Fatalf("\t" + logMsg)
 }

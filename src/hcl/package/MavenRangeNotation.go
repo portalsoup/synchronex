@@ -2,7 +2,6 @@ package _package
 
 import (
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -16,13 +15,7 @@ type Range struct {
 	End   Boundary
 }
 
-func (r Range) IsInRange(version string) {
-	if !r.isInRange(version) {
-		log.Fatalf("A package failed validation:\n%s ~ %s ~ %s\n", r.Start.Version, version, r.End.Version)
-	}
-}
-
-func (r Range) isInRange(version string) bool {
+func (r Range) IsInRange(version string) bool {
 	if r.Start.Version != "" {
 		if r.Start.Inclusive {
 			if version < r.Start.Version {
