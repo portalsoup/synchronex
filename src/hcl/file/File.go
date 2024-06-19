@@ -4,6 +4,7 @@ import (
 	"log"
 	"path/filepath"
 	"synchronex/src/filemanage"
+	"synchronex/src/provision"
 	"synchronex/src/template"
 )
 
@@ -58,35 +59,73 @@ type FileExecutor struct {
 func (f FileExecutor) Run() {
 	switch f.File.Action {
 	case "put":
-		f.put(false)
+		f.put()
 	case "sync":
-		f.put(true)
+		f.sync()
 	case "remove":
 		f.remove()
 	}
 }
 
-func (f FileExecutor) put(overwrite bool) {
-	log.Printf("About to write: %s", f.Destination)
-	copied := copyFile(f.File, f.Source, f.Destination, overwrite, f.User)
-	if copied {
-		log.Printf(" ...done\n")
+func (f FileExecutor) sync() {
+	srcFile := f.Source
+	destFile := f.Destination
+
+	isEqual, err := provision.FilesEqual(srcFile, destFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if isEqual {
+		log.Printf("Up-To-Date   %s", f.Destination)
+		return // The file is already present and up-to-date
+	}
+
+	// Pre script
+	provision.ExecuteCommand(f.Pre)
+
+	// Do work
+	success := copyFile(f, true)
+
+	// Post script
+	provision.ExecuteCommand(f.Post)
+
+	if !success {
+		log.Printf("Failed       %s", f.Destination)
 	} else {
-		log.Printf(" ...skipped!\n")
+		log.Printf("Synchronized %s", f.Destination)
+	}
+}
+
+func (f FileExecutor) put() {
+	// Pre script
+	provision.ExecuteCommand(f.Pre)
+
+	// Do work
+	success := copyFile(f, false)
+
+	// Post script
+	provision.ExecuteCommand(f.Post)
+
+	if !success {
+		log.Printf("Failed       %s", f.Destination)
+	} else {
+		log.Printf("Copied       %s", f.Destination)
 	}
 }
 
 func (f FileExecutor) remove() {
-	log.Printf("About to delete: %s", f.Destination)
-	// pre script?
-	executeBashCommand(f.Destination, false, f.Pre)
+	// pre script
+	provision.ExecuteCommand(f.Pre)
 
 	// Do work
 	err := filemanage.DeleteFile(f.Destination)
+
+	// post script
+	provision.ExecuteCommand(f.Post)
+
 	if err != nil {
-		log.Printf(" ...failed!\n")
-		log.Fatal(err)
+		log.Printf("Failed       %s", f.Destination)
 	}
-	// post script?
-	executeBashCommand(f.Destination, false, f.Post)
+	log.Printf("Deleted      %s", f.Destination)
+
 }

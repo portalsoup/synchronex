@@ -11,17 +11,17 @@ import (
 	"strings"
 )
 
-func CopyFile(src, dest string, overwrite bool, owner string, group string) error {
+func CopyFile(src, dest string, replace bool, owner string) error {
 	// Check if destination file already exists
 	if isFilePresent(dest) {
-		log.Printf("%s is already present\n", dest)
-		if overwrite {
+		if replace {
 			err := DeleteFile(dest)
 			if err != nil {
 				return err
 			}
 		} else {
-			fmt.Printf("destination file %s already exists\n", dest)
+			log.Printf("destination file %s already exists\n", dest)
+			return nil
 		}
 	}
 
@@ -29,7 +29,7 @@ func CopyFile(src, dest string, overwrite bool, owner string, group string) erro
 	srcFile, err := openFile(src)
 	defer closeFile(srcFile)
 	if err != nil {
-		log.Printf("Failed to open src file %s\n", src)
+		log.Fatalf("Failed to open src file %s\n", src)
 		return err
 	}
 
@@ -38,7 +38,7 @@ func CopyFile(src, dest string, overwrite bool, owner string, group string) erro
 	defer closeFile(destFile)
 
 	if err != nil {
-		log.Printf("Failed to create dest file %s\n", dest)
+		log.Fatalf("Failed to create dest file %s\n", dest)
 		return err
 	}
 	// Copy the content from source to destination
@@ -102,7 +102,6 @@ func FindChildren(rootPath string) ([]string, error) {
 }
 
 func openFile(file string) (*os.File, error) {
-	log.Printf("Opening the file %s\n", file)
 	openedFile, err := os.Open(file)
 	if err != nil {
 		return openedFile, err
@@ -118,8 +117,6 @@ func closeFile(file *os.File) {
 }
 
 func createFile(file string) (*os.File, error) {
-	log.Printf("Creating the file at %s\n", file)
-
 	// Ensure parent directories exist
 	err := os.MkdirAll(filepath.Dir(file), 0755)
 	if err != nil {
@@ -139,7 +136,6 @@ func isFilePresent(file string) bool {
 }
 
 func DeleteFile(file string) error {
-	log.Println("Deleting...")
 	if !isFilePresent(file) {
 		return fmt.Errorf("can't delete %s because it isn't present\n", file)
 	}

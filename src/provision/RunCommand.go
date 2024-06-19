@@ -9,7 +9,7 @@ import (
 	"os/exec"
 )
 
-func Exec(arg ...string) (*exec.Cmd, error) {
+func Exec(echo bool, arg ...string) (*exec.Cmd, error) {
 	// Command to start the package manager (e.g., pacman or apt-get)
 	cmd := exec.Command(arg[0], arg[1:]...) // Change this command as needed
 
@@ -44,7 +44,9 @@ func Exec(arg ...string) (*exec.Cmd, error) {
 	// Start a goroutine to read and print output from the command
 	go func() {
 		for outStream.Scan() {
-			log.Println(outStream.Text())
+			if echo {
+				log.Println(outStream.Text())
+			}
 			if err != nil {
 				return
 			}
@@ -54,7 +56,9 @@ func Exec(arg ...string) (*exec.Cmd, error) {
 	// Start a goroutine to read and print output from the command
 	go func() {
 		for errStream.Scan() {
-			log.Println(errStream.Text())
+			if echo {
+				log.Println(errStream.Text())
+			}
 		}
 	}()
 
@@ -67,6 +71,13 @@ func Exec(arg ...string) (*exec.Cmd, error) {
 	//}
 
 	return cmd, cmd.Wait()
+}
+
+func ExecuteCommand(command string) {
+	_, err := Exec(false, "/usr/bin/bash", "-c", command)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func keyboardListener(stdin io.WriteCloser) {
