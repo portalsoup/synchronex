@@ -10,11 +10,13 @@ Synchronex configuration files use the extension .nex.hcl.
 
 Synchronex files use the extension .nex.hcl
 
-### User Configuration
+### Context Configuration
 
 ```hcl
-user = "<username>"
-require_root = <boolean>
+context {
+  user         = "<username>"
+  require_root = <boolean>
+}
 ```
 
 - `user`: The username for which the configuration is being set up.  Used to establish file ownership.  This should be a string.
@@ -92,7 +94,10 @@ synchronex setup_zsh.nex.hcl
 ```
 
 ```hcl
-user = "myuser"
+context {
+  user = "myuser"
+
+}
 
 provisioner "setup_zsh" {
 
