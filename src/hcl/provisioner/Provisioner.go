@@ -3,9 +3,10 @@ package provisioner
 import (
 	"log"
 	"os/exec"
-	"synchronex/src/hcl/file"
-	"synchronex/src/hcl/folder"
-	_package "synchronex/src/hcl/package"
+	"synchronex/src/hcl/context"
+	"synchronex/src/hcl/provisioner/file"
+	"synchronex/src/hcl/provisioner/folder"
+	_package "synchronex/src/hcl/provisioner/package"
 )
 
 type Provisioner struct {
@@ -16,15 +17,17 @@ type Provisioner struct {
 	PackagesBlocks []_package.Package `hcl:"package,block"`
 }
 
-func (p Provisioner) Executor(user string) ProvisionExecutor {
+func (p Provisioner) Executor(context context.NexContext) ProvisionExecutor {
 	return ProvisionExecutor{
 		Provisioner: p,
-		User:        user,
+		Context:     context,
+		User:        context.PersonalUser,
 	}
 }
 
 type ProvisionExecutor struct {
 	Provisioner Provisioner
+	Context     context.NexContext
 	User        string
 }
 
@@ -54,7 +57,7 @@ func (p ProvisionExecutor) runPackages() {
 
 	failedPackages := false
 	for _, packagesBlock := range p.Provisioner.PackagesBlocks {
-		result := packagesBlock.Executor(pacmanInstalled, dpkgInstalled).Run()
+		result := packagesBlock.Executor(p.Context).Run()
 		if !result {
 			failedPackages = true
 		}
@@ -67,7 +70,7 @@ func (p ProvisionExecutor) runPackages() {
 
 func (p ProvisionExecutor) runFiles() {
 	for _, filesBlock := range p.Provisioner.FilesBlocks {
-		filesBlock.Executor(p.User).Run()
+		filesBlock.Executor(p.Context).Run()
 	}
 }
 

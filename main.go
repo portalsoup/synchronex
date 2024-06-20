@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"synchronex/src/filemanage"
+	"synchronex/src/hcl/context"
 	"synchronex/src/hcl/nex"
 )
 
@@ -21,7 +22,7 @@ func main() {
 	}
 	// If they are validated successfully, then proceed to execute
 	for _, n := range nexes {
-		n.Executor().Run()
+		n.Executor(context.NexContext{}).Run()
 	}
 }
 
