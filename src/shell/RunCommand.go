@@ -1,4 +1,4 @@
-package provision
+package shell
 
 import (
 	"bufio"
@@ -71,13 +71,6 @@ func Exec(echo bool, arg ...string) (*exec.Cmd, error) {
 	//}
 
 	return cmd, cmd.Wait()
-}
-
-func ExecuteCommand(command string) {
-	_, err := Exec(false, "/usr/bin/bash", "-c", command)
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func keyboardListener(stdin io.WriteCloser) {

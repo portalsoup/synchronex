@@ -34,10 +34,12 @@ provisioner "<provisioner_name>" {
 
 #### Package Configuration
 
-Within the `provisioner`, each `package` block specifies a software package that the target system requires. The attributes for each package are as follows:
+Within the `provisioner`, each `package` block specifies a software package that the target system requires. On each run, supported
+package managers will be automatically detected on the system.  Currently only software managed by a package manager are supported
+by this tool.  The attributes for each package are as follows:
 
-- `pacman`: A boolean indicating if the package is present using `pacman` (Arch Linux package manager).
-- `dpkg`: A boolean indicating if the package is present using `dpkg` (Debian package manager).
+- `pacman`: A boolean indicating if the package can be found using `pacman` if present.
+- `dpkg`: A boolean indicating if the package can be found using `dpkg` if present.
 - `constraints`: A version [range constraint](https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html) for the package, specified as a string.
 
 Example:
@@ -54,7 +56,7 @@ package "<package_name>" {
 Each `file` block within the `provisioner` specifies a file operation to be performed. The type of operation can be `sync`, `put`, or `remove`.
 
 - `sync`: Checks for equality of the source and destination files and replaces the destination file if they differ.
-- `put`: Acts like a one-time initialization, copying the source file to the destination only if the destination file is not present.
+- `put`: A one-time initialization, copying the source file to the destination only if the destination is not already present.
 - `remove`: Deletes an existing unmanaged file at the destination path.
 
 Attributes for each file operation are as follows:
@@ -86,7 +88,7 @@ Synchronex will scan the working directory for all .nex.hcl files and run them i
 
 ### Example
 
-To use this schema, create an HCL configuration file (e.g., `setup_home.nex.hcl`) with the desired settings and run it.
+To use this schema, create an HCL configuration file (e.g., `setup_zsh.nex.hcl`) with the desired settings and run it.
 
 ```sh
 make
@@ -96,18 +98,21 @@ synchronex setup_zsh.nex.hcl
 ```hcl
 context {
   user = "myuser"
-
 }
 
 provisioner "setup_zsh" {
 
+  # Require presence of zsh
   package "zsh" {
     dpkg = true
     constraints = "[5, )" # require zsh major version 5 or greater
   }
 
+  # Copy the .zshrc file to the home folder
   file sync "/home/{{USER}}/.zshrc" {
     src = "resources/.zshrc"
+    shell = "zsh" # use zsh to run pre/post scripts instead of default bash
+    post_command = "source /home/{{USER}}/.zshrc"
   }
 }
 
