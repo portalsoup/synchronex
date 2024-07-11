@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"path/filepath"
 	"synchronex/src/filemanage"
 	"synchronex/src/hcl/context"
 	"synchronex/src/hcl/nex"
@@ -43,6 +42,5 @@ func getNexesInWorkingDir() ([]string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	path := filepath.Dir(dir)
-	return filemanage.FindChildren(path)
+	return filemanage.FindChildren(dir)
 }

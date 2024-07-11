@@ -11,10 +11,6 @@ import (
 type Package struct {
 	Name string `hcl:"type,label"`
 
-	// Supported package managers
-	Pacman bool `hcl:"pacman,optional"`
-	Dpkg   bool `hcl:"dpkg,optional"`
-
 	VersionCommand string `hcl:"version_command,optional"`
 	VersionPattern string `hcl:"version_pattern,optional"`
 	VersionRange   string `hcl:"constraints,optional"`
@@ -24,8 +20,6 @@ func (p Package) Executor(context context.NexContext) PackageExecutor {
 	return PackageExecutor{
 		Package:        p,
 		Context:        context,
-		Pacman:         isPacmanInstalled() && p.Pacman,
-		Dpkg:           isDpkgInstalled() && p.Dpkg,
 		VersionCommand: p.VersionCommand,
 		VersionPattern: p.VersionPattern,
 		VersionRange:   p.VersionRange,
@@ -35,9 +29,6 @@ func (p Package) Executor(context context.NexContext) PackageExecutor {
 type PackageExecutor struct {
 	Package Package
 	Context context.NexContext
-
-	Pacman bool
-	Dpkg   bool
 
 	VersionCommand string
 	VersionPattern string
@@ -51,12 +42,17 @@ func (p PackageExecutor) Run() bool {
 func (p PackageExecutor) checkVersion() bool {
 	var pacmanSuccess bool
 	var aptSuccess bool
-	if p.Pacman {
+
+	if p.Context.PackageManager == "" {
+		log.Fatalf("Error: No package manager declared!")
+	}
+
+	if p.Context.PackageManager == "pacman" && isPacmanInstalled() {
 		pacmanSuccess = pacmanCheckVersion(p)
 	}
 
-	if p.Dpkg {
-		aptSuccess = aptCheckVersion(p)
+	if p.Context.PackageManager == "dpkg" && isDpkgInstalled() {
+		aptSuccess = dpkgCheckVersion(p)
 	}
 
 	return pacmanSuccess || aptSuccess
@@ -116,7 +112,7 @@ func isDpkgInstalled() bool {
 	return true
 }
 
-func aptCheckVersion(p PackageExecutor) bool {
+func dpkgCheckVersion(p PackageExecutor) bool {
 	innerCommand := fmt.Sprintf("dpkg-query -W -f='${Version}' %s", p.Package.Name)
 	cmd := exec.Command("bash", "-c", innerCommand)
 

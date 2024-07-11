@@ -2,7 +2,6 @@ package provisioner
 
 import (
 	"log"
-	"os/exec"
 	"synchronex/src/hcl/context"
 	"synchronex/src/hcl/provisioner/file"
 	"synchronex/src/hcl/provisioner/folder"
@@ -45,16 +44,6 @@ func (p ProvisionExecutor) Run() {
 }
 
 func (p ProvisionExecutor) runPackages() {
-	pacmanInstalled := isPacmanInstalled()
-	dpkgInstalled := isAptInstalled()
-
-	if pacmanInstalled {
-		log.Printf("Found pacman...")
-	}
-	if dpkgInstalled {
-		log.Printf("Found apt-get...")
-	}
-
 	failedPackages := false
 	for _, packagesBlock := range p.Provisioner.PackagesBlocks {
 		result := packagesBlock.Executor(p.Context).Run()
@@ -72,18 +61,4 @@ func (p ProvisionExecutor) runFiles() {
 	for _, filesBlock := range p.Provisioner.FilesBlocks {
 		filesBlock.Executor(p.Context).Run()
 	}
-}
-
-func isPacmanInstalled() bool {
-	// Check if "pacman" command is available in PATH
-	cmd := exec.Command("pacman", "--version")
-	err := cmd.Run()
-	return err == nil
-}
-
-func isAptInstalled() bool {
-	// Check if "apt-get" command is available in PATH
-	cmd := exec.Command("apt-get", "--version")
-	err := cmd.Run()
-	return err == nil
 }
