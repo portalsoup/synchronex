@@ -1,7 +1,6 @@
 package file
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/user"
@@ -72,42 +71,40 @@ func (f File) Executor(context context.NexContext) FileExecutor {
 	}
 }
 
-func (f File) Validate() error {
+func (f File) Validate() {
 	// Validate shell exists
 	if f.Shell != "" {
 		if _, err := os.Stat(f.Shell); os.IsNotExist(err) {
-			return fmt.Errorf("shell %s does not exist", f.Shell)
+			log.Fatalf("shell %s does not exist", f.Shell)
 		}
 	}
 
 	// Validate user exists
 	if f.User != "" {
 		if _, err := user.Lookup(f.User); err != nil {
-			return fmt.Errorf("user %s does not exist", f.User)
+			log.Fatalf("user %s does not exist", f.User)
 		}
 	}
 
 	// Validate group exists
 	if f.Group != "" {
 		if _, err := user.LookupGroup(f.Group); err != nil {
-			return fmt.Errorf("group %s does not exist", f.Group)
+			log.Fatalf("group %s does not exist", f.Group)
 		}
 	}
 
 	// Validate source file exists at resource dir
 	if f.Source != "" {
 		if _, err := os.Stat(f.Source); os.IsNotExist(err) {
-			return fmt.Errorf("source file %s does not exist", f.Source)
+			log.Fatalf("source file %s does not exist", f.Source)
 		}
 	}
 
 	// Validate destination dir is writable
 	destDir := filepath.Dir(f.Destination)
 	if err := isWritable(destDir); err != nil {
-		return fmt.Errorf("destination directory %s is not writable: %v", destDir, err)
+		log.Fatalf("destination directory %s is not writable: %v", destDir, err)
 	}
-
-	return nil
 }
 
 func isWritable(path string) error {
