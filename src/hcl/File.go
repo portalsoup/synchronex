@@ -1,8 +1,9 @@
-package file
+package hcl
 
 import (
 	"log"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
 	"synchronex/src/filemanage"
@@ -74,8 +75,8 @@ func (f File) Executor(context context.NexContext) FileExecutor {
 func (f File) Validate() {
 	// Validate shell exists
 	if f.Shell != "" {
-		if _, err := os.Stat(f.Shell); os.IsNotExist(err) {
-			log.Fatalf("shell %s does not exist", f.Shell)
+		if _, err := exec.LookPath(f.Shell); err != nil {
+			log.Fatalf("shell %s is not installed", f.Shell)
 		}
 	}
 

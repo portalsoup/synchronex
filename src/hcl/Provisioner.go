@@ -1,20 +1,17 @@
-package provisioner
+package hcl
 
 import (
 	"log"
 	"synchronex/src/hcl/context"
-	"synchronex/src/hcl/provisioner/file"
-	"synchronex/src/hcl/provisioner/folder"
-	_package "synchronex/src/hcl/provisioner/package"
 )
 
 type Provisioner struct {
 	Name string `hcl:"type,label"`
 
-	ModulesBlocks  []Provisioner      `hcl:"module,block"`
-	FilesBlocks    []file.File        `hcl:"file,block"`
-	FoldersBlocks  []folder.Folder    `hcl:"folder,block"`
-	PackagesBlocks []_package.Package `hcl:"package,block"`
+	ModulesBlocks  []NexModule `hcl:"module,block"`
+	FilesBlocks    []File      `hcl:"file,block"`
+	FoldersBlocks  []Folder    `hcl:"folder,block"`
+	PackagesBlocks []Package   `hcl:"package,block"`
 }
 
 func (p Provisioner) Executor(context context.NexContext) ProvisionExecutor {

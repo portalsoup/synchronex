@@ -1,17 +1,16 @@
-package nex
+package hcl
 
 import (
 	"fmt"
 	"log"
 	"os"
 	"synchronex/src/hcl/context"
-	"synchronex/src/hcl/provisioner"
 )
 
 type Nex struct {
 	Context context.NexContext `hcl:"context,block"`
 
-	ProvisionerBlock provisioner.Provisioner `hcl:"provisioner,block"`
+	ProvisionerBlock Provisioner `hcl:"provisioner,block"`
 }
 
 func (n Nex) Executor(context context.NexContext) NexExecutor {

@@ -1,4 +1,4 @@
-package folder
+package hcl
 
 import "log"
 

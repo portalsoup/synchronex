@@ -1,19 +1,16 @@
 package main
 
 import (
-	"log"
-	"os"
-	"synchronex/src/filemanage"
+	"synchronex/src/hcl"
 	"synchronex/src/hcl/context"
-	"synchronex/src/hcl/nex"
 )
 
 func main() {
 	// Determine nexes finding strategy
-	foundNexes := findNexes()
+	foundNexes := hcl.FindNexes()
 
 	// Parse nexes rawPaths into objects
-	nexes := nex.ParseNexFiles(foundNexes)
+	nexes := hcl.ParseNexFiles(foundNexes)
 
 	// Validate each nex or fail
 	for _, n := range nexes {
@@ -23,24 +20,4 @@ func main() {
 	for _, n := range nexes {
 		n.Executor(context.NexContext{}).Run()
 	}
-}
-
-func findNexes() []string {
-	if len(os.Args) > 1 {
-		return os.Args[1:]
-	} else {
-		foundNexes, err := getNexesInWorkingDir()
-		if err != nil {
-			log.Fatal(err)
-		}
-		return foundNexes
-	}
-}
-
-func getNexesInWorkingDir() ([]string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return filemanage.FindChildren(dir)
 }
