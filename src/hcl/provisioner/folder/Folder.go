@@ -1,5 +1,7 @@
 package folder
 
+import "log"
+
 type Folder struct {
 	// "put" copy if not present
 	// "sync" unconditionally replace with current version
@@ -11,4 +13,8 @@ type Folder struct {
 	Source      string `hcl:"src,optional"`
 	PreCommand  string `hcl:"pre_command,optional"`
 	PostCommand string `hcl:"post_command,optional"`
+}
+
+func (f Folder) Validate() {
+	log.Fatal("Folder validation not yet implemented!")
 }

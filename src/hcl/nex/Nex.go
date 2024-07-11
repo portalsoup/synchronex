@@ -30,6 +30,9 @@ func (n Nex) Validate() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// propagate validation check
+	n.ProvisionerBlock.Validate()
 }
 
 // Validation functions

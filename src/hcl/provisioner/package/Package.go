@@ -26,6 +26,10 @@ func (p Package) Executor(context context.NexContext) PackageExecutor {
 	}
 }
 
+func (p Package) Validate() {
+
+}
+
 type PackageExecutor struct {
 	Package Package
 	Context context.NexContext

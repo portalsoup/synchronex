@@ -1,7 +1,10 @@
 package file
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"os/user"
 	"path/filepath"
 	"synchronex/src/filemanage"
 	"synchronex/src/hcl/context"
@@ -67,6 +70,54 @@ func (f File) Executor(context context.NexContext) FileExecutor {
 		Pre:         templateConfig.Replace(f.PreCommand),
 		Post:        templateConfig.Replace(f.PostCommand),
 	}
+}
+
+func (f File) Validate() error {
+	// Validate shell exists
+	if f.Shell != "" {
+		if _, err := os.Stat(f.Shell); os.IsNotExist(err) {
+			return fmt.Errorf("shell %s does not exist", f.Shell)
+		}
+	}
+
+	// Validate user exists
+	if f.User != "" {
+		if _, err := user.Lookup(f.User); err != nil {
+			return fmt.Errorf("user %s does not exist", f.User)
+		}
+	}
+
+	// Validate group exists
+	if f.Group != "" {
+		if _, err := user.LookupGroup(f.Group); err != nil {
+			return fmt.Errorf("group %s does not exist", f.Group)
+		}
+	}
+
+	// Validate source file exists at resource dir
+	if f.Source != "" {
+		if _, err := os.Stat(f.Source); os.IsNotExist(err) {
+			return fmt.Errorf("source file %s does not exist", f.Source)
+		}
+	}
+
+	// Validate destination dir is writable
+	destDir := filepath.Dir(f.Destination)
+	if err := isWritable(destDir); err != nil {
+		return fmt.Errorf("destination directory %s is not writable: %v", destDir, err)
+	}
+
+	return nil
+}
+
+func isWritable(path string) error {
+	testFile := filepath.Join(path, ".writetest")
+	file, err := os.OpenFile(testFile, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+	if err != nil {
+		return err
+	}
+	file.Close()
+	return os.Remove(testFile)
 }
 
 type FileExecutor struct {

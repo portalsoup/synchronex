@@ -11,6 +11,7 @@ import (
 type Provisioner struct {
 	Name string `hcl:"type,label"`
 
+	ModulesBlocks  []Provisioner      `hcl:"module,block"`
 	FilesBlocks    []file.File        `hcl:"file,block"`
 	FoldersBlocks  []folder.Folder    `hcl:"folder,block"`
 	PackagesBlocks []_package.Package `hcl:"package,block"`
@@ -21,6 +22,24 @@ func (p Provisioner) Executor(context context.NexContext) ProvisionExecutor {
 		Provisioner: p,
 		Context:     context,
 		User:        context.PersonalUser,
+	}
+}
+
+func (p Provisioner) Validate() {
+	for _, aModule := range p.ModulesBlocks {
+		aModule.Validate()
+	}
+
+	for _, aFolder := range p.FoldersBlocks {
+		aFolder.Validate()
+	}
+
+	for _, aFile := range p.FilesBlocks {
+		aFile.Validate()
+	}
+
+	for _, aPackage := range p.PackagesBlocks {
+		aPackage.Validate()
 	}
 }
 
