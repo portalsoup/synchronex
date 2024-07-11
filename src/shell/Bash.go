@@ -8,6 +8,10 @@ import (
 type Bash struct {
 }
 
+func (bash Bash) Name() string {
+	return "bash"
+}
+
 func (bash Bash) ExecuteCommand(cmd string) {
 	_, err := Exec(false, whichBash(), "-c", cmd)
 	if err != nil {

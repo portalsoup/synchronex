@@ -26,7 +26,7 @@ func (p Package) Executor(context context.NexContext) PackageExecutor {
 	}
 }
 
-func (p Package) Validate() {
+func (p PackageExecutor) Validate() {
 
 }
 

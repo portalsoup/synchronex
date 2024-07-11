@@ -22,26 +22,27 @@ func (p Provisioner) Executor(context context.NexContext) ProvisionExecutor {
 	}
 }
 
-func (p Provisioner) Validate() {
+func (p Provisioner) Validate(context context.NexContext) {
 	for _, aModule := range p.ModulesBlocks {
-		aModule.Validate()
+		aModule.Executor(context).Validate()
 	}
 
 	for _, aFolder := range p.FoldersBlocks {
-		aFolder.Validate()
+		aFolder.Executor(context).Validate()
 	}
 
 	for _, aFile := range p.FilesBlocks {
-		aFile.Validate()
+		aFile.Executor(context).Validate()
 	}
 
 	for _, aPackage := range p.PackagesBlocks {
-		aPackage.Validate()
+		aPackage.Executor(context).Validate()
 	}
 }
 
 type ProvisionExecutor struct {
 	Provisioner Provisioner
+	Path        string
 	Context     context.NexContext
 	User        string
 }
@@ -51,6 +52,11 @@ func (p ProvisionExecutor) Run() {
 	log.Println("* Validating Packages *")
 	log.Println("***********************")
 	p.runPackages()
+
+	log.Println("************************")
+	log.Println("* Running nested Nexes *")
+	log.Println("************************")
+	p.runModules()
 
 	log.Println("****************")
 	log.Println("* Moving Files *")
@@ -76,5 +82,11 @@ func (p ProvisionExecutor) runPackages() {
 func (p ProvisionExecutor) runFiles() {
 	for _, filesBlock := range p.Provisioner.FilesBlocks {
 		filesBlock.Executor(p.Context).Run()
+	}
+}
+
+func (p ProvisionExecutor) runModules() {
+	for _, moduleBlock := range p.Provisioner.ModulesBlocks {
+		moduleBlock.Executor(p.Context).Run()
 	}
 }

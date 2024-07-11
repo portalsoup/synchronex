@@ -11,6 +11,8 @@ type Nex struct {
 	Context context.NexContext `hcl:"context,block"`
 
 	ProvisionerBlock Provisioner `hcl:"provisioner,block"`
+
+	Path string
 }
 
 func (n Nex) Executor(context context.NexContext) NexExecutor {
@@ -31,7 +33,7 @@ func (n Nex) Validate() {
 	}
 
 	// propagate validation check
-	n.ProvisionerBlock.Validate()
+	n.ProvisionerBlock.Validate(n.Context)
 }
 
 // Validation functions

@@ -1,7 +1,6 @@
 package hcl
 
 import (
-	"log"
 	"synchronex/src/hcl/context"
 )
 
@@ -20,16 +19,13 @@ func (m NexModule) Executor(context context.NexContext) NexModuleExecutor {
 	}
 }
 
-func (m NexModule) Validate() {
+func (m NexModuleExecutor) Validate() {
 	found := FindNexes(m.Path)
-
 	parsed := ParseNexFiles(found)
 
 	for _, n := range parsed {
 		n.Validate()
 	}
-
-	log.Fatal("Validation reached the end, failing")
 }
 
 type NexModuleExecutor struct {
@@ -39,5 +35,10 @@ type NexModuleExecutor struct {
 }
 
 func (m NexModuleExecutor) Run() {
+	found := FindNexes(m.Path)
+	parsed := ParseNexFiles(found)
 
+	for _, n := range parsed {
+		n.Executor(m.Context).Run()
+	}
 }

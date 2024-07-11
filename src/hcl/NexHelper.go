@@ -21,6 +21,7 @@ func ParseNexFiles(nexes []string) []Nex {
 	foundNexes := make([]Nex, len(nexes))
 	for i, nex := range nexes {
 		config := ParseNexFile(nex)
+		config.Context.Path = filepath.Dir(nex)
 		foundNexes[i] = config
 	}
 	return foundNexes

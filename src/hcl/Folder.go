@@ -1,6 +1,9 @@
 package hcl
 
-import "log"
+import (
+	"log"
+	"synchronex/src/hcl/context"
+)
 
 type Folder struct {
 	// "put" copy if not present
@@ -15,6 +18,14 @@ type Folder struct {
 	PostCommand string `hcl:"post_command,optional"`
 }
 
-func (f Folder) Validate() {
+func (f FolderExecutor) Validate() {
 	log.Fatal("Folder validation not yet implemented!")
+}
+
+func (f Folder) Executor(context context.NexContext) FolderExecutor {
+	return FolderExecutor{}
+}
+
+type FolderExecutor struct {
+	Folder Folder
 }

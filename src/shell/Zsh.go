@@ -7,6 +7,10 @@ import (
 
 type Zsh struct{}
 
+func (zsh Zsh) Name() string {
+	return "zsh"
+}
+
 func (zsh Zsh) ExecuteCommand(cmd string) {
 	_, err := Exec(false, whichZsh(), "-c", cmd)
 	if err != nil {

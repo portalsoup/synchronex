@@ -1,6 +1,7 @@
 package hcl
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -31,7 +32,8 @@ type File struct {
 }
 
 func (f File) Executor(context context.NexContext) FileExecutor {
-	sourceRaw, err := filepath.Abs(f.Source)
+	joined := filepath.Join(context.Path, f.Source)
+	sourceRaw, err := filepath.Abs(joined)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,6 +41,11 @@ func (f File) Executor(context context.NexContext) FileExecutor {
 	user := f.User
 	if user == "" {
 		user = context.PersonalUser
+	}
+
+	group := f.Group
+	if group == "" {
+		group = context.PersonalUser
 	}
 
 	shellString := f.Shell
@@ -66,18 +73,18 @@ func (f File) Executor(context context.NexContext) FileExecutor {
 		Source:      templateConfig.Replace(sourceRaw),
 		Destination: templateConfig.Replace(f.Destination),
 		User:        user,
+		Group:       group,
 		Shell:       shell,
 		Pre:         templateConfig.Replace(f.PreCommand),
 		Post:        templateConfig.Replace(f.PostCommand),
 	}
 }
 
-func (f File) Validate() {
+func (f FileExecutor) Validate() {
 	// Validate shell exists
-	if f.Shell != "" {
-		if _, err := exec.LookPath(f.Shell); err != nil {
-			log.Fatalf("shell %s is not installed", f.Shell)
-		}
+
+	if _, err := exec.LookPath(f.Shell.Name()); err != nil {
+		log.Fatalf("shell %s is not installed", f.Shell)
 	}
 
 	// Validate user exists
@@ -103,19 +110,33 @@ func (f File) Validate() {
 
 	// Validate destination dir is writable
 	destDir := filepath.Dir(f.Destination)
-	if err := isWritable(destDir); err != nil {
-		log.Fatalf("destination directory %s is not writable: %v", destDir, err)
-	}
+	isWritable(destDir)
 }
 
 func isWritable(path string) error {
-	testFile := filepath.Join(path, ".writetest")
-	file, err := os.OpenFile(testFile, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+	// Check if the directory exists
+	dir, err := os.Open(path)
 	if err != nil {
-		return err
+		if os.IsNotExist(err) {
+			return fmt.Errorf("directory %s does not exist", path)
+		}
+		return fmt.Errorf("failed to open directory: %v", err)
 	}
-	file.Close()
-	return os.Remove(testFile)
+	defer dir.Close()
+
+	// Check if we can write to the directory
+	testFile := ".writetest"
+	testPath := fmt.Sprintf("%s/%s", path, testFile)
+	file, err := os.Create(testPath)
+	if err != nil {
+		return fmt.Errorf("failed to create test file in directory: %v", err)
+	}
+	defer func() {
+		file.Close()
+		os.Remove(testPath)
+	}()
+
+	return nil
 }
 
 type FileExecutor struct {
@@ -124,6 +145,7 @@ type FileExecutor struct {
 	Source      string
 	Destination string
 	User        string
+	Group       string
 	Shell       Shell
 	Pre         string
 	Post        string
