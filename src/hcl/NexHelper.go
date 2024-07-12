@@ -45,15 +45,12 @@ func FindNexes(workingDir ...string) []string {
 		}
 	}
 
-	if len(os.Args) > 1 {
-		return os.Args[1:]
-	} else {
-		foundNexes, err := getNexesInDir(dir)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return foundNexes
+	foundNexes, err := getNexesInDir(dir)
+	if err != nil {
+		log.Fatal(err)
 	}
+	return foundNexes
+
 }
 
 func getNexesInDir(dir string) ([]string, error) {
