@@ -13,7 +13,6 @@ type Nex struct {
 }
 
 func (n Nex) Executor(context NexContext) NexExecutor {
-	log.Printf("About to dereference a context: %s", *n.Context)
 	var newContext NexContext
 	if n.Context != nil {
 		newContext = *n.Context

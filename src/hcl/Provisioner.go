@@ -52,16 +52,12 @@ func (p ProvisionExecutor) Run() {
 	log.Println("***********************")
 	p.runPackages()
 
-	log.Println("************************")
-	log.Println("* Running nested Nexes *")
-	log.Println("************************")
-	p.runModules()
-
-	log.Println("****************")
-	log.Println("* Moving Files *")
-	log.Println("****************")
+	log.Println("******************")
+	log.Println("* Managing Files *")
+	log.Println("******************")
 	p.runFiles()
 
+	p.runModules()
 }
 
 func (p ProvisionExecutor) runPackages() {

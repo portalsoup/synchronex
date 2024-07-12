@@ -1,9 +1,5 @@
 package hcl
 
-import (
-	"log"
-)
-
 type NexModule struct {
 	// "put" copy if not present
 	// "sync" unconditionally replace with current version
@@ -12,7 +8,6 @@ type NexModule struct {
 }
 
 func (m NexModule) Executor(context NexContext) NexModuleExecutor {
-	log.Printf("context inside module executor: %s", context)
 	return NexModuleExecutor{
 		Context: context,
 		Path:    m.Path,
@@ -39,7 +34,6 @@ func (m NexModuleExecutor) Run() {
 	parsed := ParseNexFiles(&m.Context, found)
 
 	for _, n := range parsed {
-		log.Printf("About to dereference a context: %s", m)
 		n.Executor(m.Context).Run()
 	}
 }
