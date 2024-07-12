@@ -5,7 +5,6 @@ import (
 	"log"
 	"os/exec"
 	"strings"
-	"synchronex/src/hcl/context"
 )
 
 type Package struct {
@@ -16,7 +15,7 @@ type Package struct {
 	VersionRange   string `hcl:"constraints,optional"`
 }
 
-func (p Package) Executor(context context.NexContext) PackageExecutor {
+func (p Package) Executor(context NexContext) PackageExecutor {
 	return PackageExecutor{
 		Package:        p,
 		Context:        context,
@@ -32,7 +31,7 @@ func (p PackageExecutor) Validate() {
 
 type PackageExecutor struct {
 	Package Package
-	Context context.NexContext
+	Context NexContext
 
 	VersionCommand string
 	VersionPattern string

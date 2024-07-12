@@ -4,43 +4,46 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"synchronex/src/hcl/context"
 )
 
 type Nex struct {
-	Context context.NexContext `hcl:"context,block"`
+	Context *NexContext `hcl:"context,block"`
 
 	ProvisionerBlock Provisioner `hcl:"provisioner,block"`
-
-	Path string
 }
 
-func (n Nex) Executor(context context.NexContext) NexExecutor {
-	name := n.ProvisionerBlock.Name
+func (n Nex) Executor(context NexContext) NexExecutor {
+	log.Printf("About to dereference a context: %s", *n.Context)
+	var newContext NexContext
+	if n.Context != nil {
+		newContext = *n.Context
+	} else {
+		newContext = context
+	}
 
 	return NexExecutor{
 		Nex:     n,
-		Name:    name,
-		Context: n.Context,
+		Name:    n.ProvisionerBlock.Name,
+		Context: newContext,
 	}
 }
 
-func (n Nex) Validate() {
+func (n NexExecutor) Validate() {
 
-	err := validateRootRequirement(n)
+	err := validateRootRequirement(n.Nex)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// propagate validation check
-	n.ProvisionerBlock.Validate(n.Context)
+	n.Nex.ProvisionerBlock.Validate(n.Context)
 }
 
 // Validation functions
 
 func validateRootRequirement(doc Nex) error {
 	// If requires root, but is not root... fail
-	if doc.Context.RequireRoot == true && os.Geteuid() != 0 {
+	if doc.Context != nil && doc.Context.RequireRoot == true && os.Geteuid() != 0 {
 		return fmt.Errorf("The nex \"%s\" requires root\n", doc.ProvisionerBlock.Name)
 	}
 	return nil
@@ -48,7 +51,7 @@ func validateRootRequirement(doc Nex) error {
 
 type NexExecutor struct {
 	Nex     Nex
-	Context context.NexContext
+	Context NexContext
 	Name    string
 	User    string
 }

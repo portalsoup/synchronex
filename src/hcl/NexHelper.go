@@ -17,11 +17,16 @@ func ParseNexFile(path string) Nex {
 	return config
 }
 
-func ParseNexFiles(nexes []string) []Nex {
+func ParseNexFiles(context *NexContext, nexes []string) []Nex {
 	foundNexes := make([]Nex, len(nexes))
 	for i, nex := range nexes {
 		config := ParseNexFile(nex)
-		config.Context.Path = filepath.Dir(nex)
+		if config.Context == nil {
+			context.Path = filepath.Dir(nex)
+			config.Context = context
+		} else {
+			config.Context.Path = filepath.Dir(nex)
+		}
 		foundNexes[i] = config
 	}
 	return foundNexes

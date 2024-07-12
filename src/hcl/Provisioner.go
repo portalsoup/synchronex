@@ -2,7 +2,6 @@ package hcl
 
 import (
 	"log"
-	"synchronex/src/hcl/context"
 )
 
 type Provisioner struct {
@@ -14,7 +13,7 @@ type Provisioner struct {
 	PackagesBlocks []Package   `hcl:"package,block"`
 }
 
-func (p Provisioner) Executor(context context.NexContext) ProvisionExecutor {
+func (p Provisioner) Executor(context NexContext) ProvisionExecutor {
 	return ProvisionExecutor{
 		Provisioner: p,
 		Context:     context,
@@ -22,7 +21,7 @@ func (p Provisioner) Executor(context context.NexContext) ProvisionExecutor {
 	}
 }
 
-func (p Provisioner) Validate(context context.NexContext) {
+func (p Provisioner) Validate(context NexContext) {
 	for _, aModule := range p.ModulesBlocks {
 		aModule.Executor(context).Validate()
 	}
@@ -43,7 +42,7 @@ func (p Provisioner) Validate(context context.NexContext) {
 type ProvisionExecutor struct {
 	Provisioner Provisioner
 	Path        string
-	Context     context.NexContext
+	Context     NexContext
 	User        string
 }
 

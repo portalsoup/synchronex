@@ -8,7 +8,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"synchronex/src/filemanage"
-	"synchronex/src/hcl/context"
 	"synchronex/src/provision"
 	. "synchronex/src/shell"
 	"synchronex/src/template"
@@ -31,7 +30,7 @@ type File struct {
 	Group string `hcl:"group,optional"`
 }
 
-func (f File) Executor(context context.NexContext) FileExecutor {
+func (f File) Executor(context NexContext) FileExecutor {
 	joined := filepath.Join(context.Path, f.Source)
 	sourceRaw, err := filepath.Abs(joined)
 	if err != nil {
@@ -141,7 +140,7 @@ func isWritable(path string) error {
 
 type FileExecutor struct {
 	File        File
-	Context     context.NexContext
+	Context     NexContext
 	Source      string
 	Destination string
 	User        string

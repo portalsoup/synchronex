@@ -1,7 +1,7 @@
 package hcl
 
 import (
-	"synchronex/src/hcl/context"
+	"log"
 )
 
 type NexModule struct {
@@ -11,8 +11,8 @@ type NexModule struct {
 	Path string `hcl:"type,label"`
 }
 
-func (m NexModule) Executor(context context.NexContext) NexModuleExecutor {
-
+func (m NexModule) Executor(context NexContext) NexModuleExecutor {
+	log.Printf("context inside module executor: %s", context)
 	return NexModuleExecutor{
 		Context: context,
 		Path:    m.Path,
@@ -21,24 +21,25 @@ func (m NexModule) Executor(context context.NexContext) NexModuleExecutor {
 
 func (m NexModuleExecutor) Validate() {
 	found := FindNexes(m.Path)
-	parsed := ParseNexFiles(found)
+	parsed := ParseNexFiles(&m.Context, found)
 
 	for _, n := range parsed {
-		n.Validate()
+		n.Executor(*n.Context).Validate()
 	}
 }
 
 type NexModuleExecutor struct {
 	NexModule NexModule
-	Context   context.NexContext
+	Context   NexContext
 	Path      string
 }
 
 func (m NexModuleExecutor) Run() {
 	found := FindNexes(m.Path)
-	parsed := ParseNexFiles(found)
+	parsed := ParseNexFiles(&m.Context, found)
 
 	for _, n := range parsed {
+		log.Printf("About to dereference a context: %s", m)
 		n.Executor(m.Context).Run()
 	}
 }

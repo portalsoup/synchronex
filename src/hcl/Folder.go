@@ -2,7 +2,6 @@ package hcl
 
 import (
 	"log"
-	"synchronex/src/hcl/context"
 )
 
 type Folder struct {
@@ -22,7 +21,7 @@ func (f FolderExecutor) Validate() {
 	log.Fatal("Folder validation not yet implemented!")
 }
 
-func (f Folder) Executor(context context.NexContext) FolderExecutor {
+func (f Folder) Executor(context NexContext) FolderExecutor {
 	return FolderExecutor{}
 }
 
