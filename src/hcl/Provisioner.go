@@ -56,6 +56,7 @@ func (p ProvisionExecutor) Run() {
 	log.Println("* Managing Files *")
 	log.Println("******************")
 	p.runFiles()
+	p.runFolders()
 
 	p.runModules()
 }
@@ -77,6 +78,12 @@ func (p ProvisionExecutor) runPackages() {
 func (p ProvisionExecutor) runFiles() {
 	for _, filesBlock := range p.Provisioner.FilesBlocks {
 		filesBlock.Executor(p.Context).Run()
+	}
+}
+
+func (p ProvisionExecutor) runFolders() {
+	for _, foldersBlock := range p.Provisioner.FoldersBlocks {
+		foldersBlock.Executor(p.Context).Run()
 	}
 }
 
