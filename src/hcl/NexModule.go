@@ -1,5 +1,9 @@
 package hcl
 
+import (
+	"path/filepath"
+)
+
 type NexModule struct {
 	// "put" copy if not present
 	// "sync" unconditionally replace with current version
@@ -8,14 +12,16 @@ type NexModule struct {
 }
 
 func (m NexModule) Executor(context NexContext) NexModuleExecutor {
+	path, _ := filepath.Abs(m.Path)
+	context.Path = path
 	return NexModuleExecutor{
-		Context: context,
-		Path:    m.Path,
+		Context:   context,
+		NexModule: m,
 	}
 }
 
 func (m NexModuleExecutor) Validate() {
-	found := FindNexes(m.Path)
+	found := FindNexes(m.Context.Path)
 	parsed := ParseNexFiles(&m.Context, found)
 
 	for _, n := range parsed {
@@ -26,11 +32,10 @@ func (m NexModuleExecutor) Validate() {
 type NexModuleExecutor struct {
 	NexModule NexModule
 	Context   NexContext
-	Path      string
 }
 
 func (m NexModuleExecutor) Run() {
-	found := FindNexes(m.Path)
+	found := FindNexes(m.Context.Path)
 	parsed := ParseNexFiles(&m.Context, found)
 
 	for _, n := range parsed {

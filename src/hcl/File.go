@@ -31,8 +31,13 @@ type File struct {
 }
 
 func (f File) Executor(context NexContext) FileExecutor {
-	joined := filepath.Join(context.Path, f.Source)
-	sourceRaw, err := filepath.Abs(joined)
+	var absPath string
+	if !filepath.IsAbs(f.Source) {
+		absPath = filepath.Join(context.Path, f.Source)
+	} else {
+		absPath = f.Source
+	}
+	sourceRaw, err := filepath.Abs(absPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -170,7 +175,7 @@ func (f FileExecutor) sync() {
 		log.Fatal(err)
 	}
 	if isEqual {
-		log.Printf("Up-To-Date   %s", f.Destination)
+		log.Printf("Up-To-Date   %s", destFile)
 		return // The file is already present and up-to-date
 	}
 
@@ -184,9 +189,9 @@ func (f FileExecutor) sync() {
 	f.Shell.ExecuteCommand(f.Post)
 
 	if !success {
-		log.Printf("Failed       %s", f.Destination)
+		log.Printf("Failed       %s", destFile)
 	} else {
-		log.Printf("Synchronized %s", f.Destination)
+		log.Printf("Synchronized %s", destFile)
 	}
 }
 
