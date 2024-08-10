@@ -1,6 +1,6 @@
 .PHONY: all build install uninstall
 
-all: build install
+all: build
 
 build:
 	go build .
