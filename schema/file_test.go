@@ -9,7 +9,7 @@ func TestNoFilesDiff(t *testing.T) {
 	// Input Data
 	state := &Nex{
 		Files: []File{
-			File{
+			{
 				Source:      "test/file",
 				Destination: "~/.cache/synchronex/file",
 			},
@@ -17,7 +17,7 @@ func TestNoFilesDiff(t *testing.T) {
 	}
 	plan := &Nex{
 		Files: []File{
-			File{
+			{
 				Source:      "test/file",
 				Destination: "~/.cache/synchronex/file",
 			},
@@ -115,15 +115,17 @@ func TestReplaceFile(t *testing.T) {
 	newFile1 := File{
 		Source:      "test/file",
 		Destination: "~/.cache/synchronex/file",
-		User:        "test",
+		User:        "test2", // Modification
 	}
 
 	state := &Nex{
+		User: "test",
 		Files: []File{
 			file1,
 		},
 	}
 	plan := &Nex{
+		User: "test",
 		Files: []File{
 			newFile1,
 		},
@@ -131,11 +133,11 @@ func TestReplaceFile(t *testing.T) {
 
 	// Expected Output
 	expectedFiles := []File{
-		File{
+		{
 			Action:      "Remove",
 			Destination: "~/.cache/synchronex/file",
 		},
-		File{
+		{
 			Action:      "Add",
 			Destination: "~/.cache/synchronex/file",
 		},

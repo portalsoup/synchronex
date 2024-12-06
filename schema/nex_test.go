@@ -10,16 +10,16 @@ func TestNoDiff(t *testing.T) {
 	state := &Nex{
 		User: "test",
 		Files: []File{
-			File{
+			{
 				Source:      "test/file",
 				Destination: "~/.cache/synchronex/file",
 			},
 		},
 		Batches: []Nex{
-			Nex{
+			{
 				User: "test2",
 				Files: []File{
-					File{
+					{
 						Source:      "test/file2",
 						Destination: "~/.cache/synchronex/file2",
 					},
@@ -30,16 +30,16 @@ func TestNoDiff(t *testing.T) {
 	plan := &Nex{
 		User: "test",
 		Files: []File{
-			File{
+			{
 				Source:      "test/file",
 				Destination: "~/.cache/synchronex/file",
 			},
 		},
 		Batches: []Nex{
-			Nex{
+			{
 				User: "test2",
 				Files: []File{
-					File{
+					{
 						Source:      "test/file2",
 						Destination: "~/.cache/synchronex/file2",
 					},
@@ -49,7 +49,7 @@ func TestNoDiff(t *testing.T) {
 	}
 
 	// Expected Output
-	expectedChanges := Nex{
+	expectedChanges := &Nex{
 		Files:   []File{},
 		Batches: []Nex{},
 	} // Should have no changes
@@ -58,7 +58,7 @@ func TestNoDiff(t *testing.T) {
 	result := plan.DifferencesFromState(*state)
 
 	// Verification
-	assert.Equal(t, expectedChanges, *result)
+	assert.Equal(t, expectedChanges, result)
 }
 
 func TestSetUser(t *testing.T) {
