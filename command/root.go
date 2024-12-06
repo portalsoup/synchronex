@@ -15,11 +15,19 @@ var (
 		Use:   "synchronex",
 		Short: "Personal computer state manager",
 		Long:  ``,
-		Run: func(cmd *cobra.Command, args []string) {
-			log.Printf("Running command: %s", cmd.Name())
-			log.Printf("Got this nex: %#v", *Nex)
-		},
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			_, err := common.ReadStatefile()
+			if err != nil {
+				// Initialize empty state if necessary
+				err = common.WriteStatefile(schema.Nex{
+					Files:   []schema.File{},
+					Batches: []schema.Nex{},
+				})
+				if err != nil {
+					log.Fatalf("Error initializing state file: %s", err)
+				}
+			}
+
 			quiet, err := cmd.Root().Flags().GetBool("quiet")
 			if err != nil {
 				log.Fatalf("Error getting verbose flag: %s", err)
@@ -53,6 +61,9 @@ var (
 
 func init() {
 	RootCmd.Flags().BoolP("quiet", "q", false, "Silence output to stdout")
+
+	RootCmd.AddCommand(PlanCmd)
+	RootCmd.AddCommand(ApplyCmd)
 }
 
 func Execute() (err error) {
