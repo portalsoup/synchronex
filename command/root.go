@@ -1,54 +1,64 @@
 package command
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
+	"path/filepath"
 	"synchronex/common"
 	"synchronex/schema"
 )
 
 var (
-	nexAbsPath string
-	nexes      []*schema.Nex
-	rootCmd    = &cobra.Command{
+	Nex     *schema.Nex
+	RootCmd = &cobra.Command{
 		Use:   "synchronex",
 		Short: "Personal computer state manager",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			for _, nex := range nexes {
-				log.Printf("Got this nex: %#v", *nex)
+			log.Printf("Running command: %s", cmd.Name())
+			log.Printf("Got this nex: %#v", *Nex)
+		},
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			quiet, err := cmd.Root().Flags().GetBool("quiet")
+			if err != nil {
+				log.Fatalf("Error getting verbose flag: %s", err)
 			}
+
+			common.ConfigureLogger(!quiet)
+
+			if len(args) == 0 {
+				log.Fatal("No nex file specified")
+			}
+
+			// Check if the file exists
+			if _, err := os.Stat(args[0]); os.IsNotExist(err) {
+				log.Fatalf("File does not exist: %s", args[0])
+			}
+
+			// Convert to absolute path
+			absPath, err := filepath.Abs(args[0])
+			if err != nil {
+				log.Fatalf("Error converting path to absolute path: %s", err)
+			}
+
+			parsedNex, err := common.ParseNexFile(absPath)
+			if err != nil || parsedNex == nil {
+				log.Fatalf("Error parsing nex file[%s]:\n\tReason:\n%s", parsedNex, err)
+			}
+			Nex = parsedNex
 		},
 	}
 )
 
-func Execute() error {
+func init() {
+	RootCmd.Flags().BoolP("quiet", "q", false, "Silence output to stdout")
+}
 
-	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			dirPath, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-
-			foundNexes, err := common.GetNexes(dirPath)
-			if err != nil {
-				return fmt.Errorf("Failed to load Nex from path %s. %v", foundNexes, err)
-			}
-			nexes = foundNexes
-		}
-
-		for _, nexPath := range args {
-			foundNexes, err := common.GetNexes(nexPath)
-			if err != nil {
-				return fmt.Errorf("Failed to load Nex from path %s. %v", nexPath, err)
-			}
-			nexes = append(nexes, foundNexes...) // error foundNexes is an array
-		}
-		return nil
+func Execute() (err error) {
+	err = RootCmd.Execute()
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	return rootCmd.Execute()
+	return err
 }

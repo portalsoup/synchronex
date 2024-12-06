@@ -1,7 +1,8 @@
 package execution
 
-type Job interface {
-	validation() (bool, error)
-	execution() error
-	ToString() string
+type Job[J any] interface {
+	Validate() bool
+	Execute()
+	DifferencesFromState(state J) *J
+	HashCode() (uint32, error)
 }

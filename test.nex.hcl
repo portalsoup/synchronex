@@ -1,3 +1,3 @@
-file "" {
+file "/tmp/build.gradle.kts" {
 
 }
