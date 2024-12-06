@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"log"
 	"os"
+	"path/filepath"
 	"synchronex/schema"
 )
 
@@ -31,11 +32,33 @@ func ParseNexFile(path string) (*schema.Nex, error) {
 
 func WriteStatefile(state schema.Nex) (err error) {
 	// Create or open a file in the current working directory
-	file, err := os.Create("statefile.hcl")
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("Error getting home directory:", err)
+		return
+	}
+
+	// Create the full path to the .local directory
+	dataDir := filepath.Join(homeDir, ".local", "share", "synchronex")
+	statefile := filepath.Join(dataDir, "statefile.hcl")
+
+	// Ensure the directory exists
+	err = os.MkdirAll(dataDir, os.ModePerm)
+	if err != nil {
+		fmt.Println("Error creating directory:", err)
+		return
+	}
+
+	file, err := os.Create(statefile)
 	if err != nil {
 		return fmt.Errorf("error creating file: %v", err)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+
+		}
+	}(file)
 
 	f := hclwrite.NewEmptyFile()
 	gohcl.EncodeIntoBody(&state, f.Body())
@@ -47,4 +70,23 @@ func WriteStatefile(state schema.Nex) (err error) {
 	}
 
 	return nil
+}
+
+func ReadStatefile() (*schema.Nex, error) {
+	var config = schema.Nex{}
+	//var config schema.Nex
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	dataDir := filepath.Join(homeDir, ".local", "share", "synchronex")
+	statefile := filepath.Join(dataDir, "statefile.hcl")
+
+	err = hclsimple.DecodeFile(statefile, nil, &config)
+	log.Println("Found state:\t", config)
+	if err != nil {
+		return &config, fmt.Errorf("Failed to load configuration: %s", err)
+	}
+	return &config, nil
 }
