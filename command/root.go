@@ -21,7 +21,6 @@ var (
 				// Initialize empty state if necessary
 				err = common.WriteStatefile(schema.Nex{
 					Files:   []schema.File{},
-					Batches: []schema.Nex{},
 				})
 				if err != nil {
 					log.Fatalf("Error initializing state file: %s", err)

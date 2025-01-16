@@ -11,7 +11,6 @@ type Nex struct {
 	execution.Job[Nex] `json:"job,omitempty"`
 	User               string `hcl:"user,optional" json:"user,omitempty"`
 	Files              []File `hcl:"file,block" json:"files,omitempty"`
-	Batches            []Nex  `hcl:"batch,block" json:"batches,omitempty"`
 }
 
 func (n *Nex) Validate() bool {
@@ -25,20 +24,10 @@ func (n *Nex) Execute() {
 func (n *Nex) DifferencesFromState(state Nex) (diff *Nex) {
 	diff = &Nex{
 		Files:   make([]File, 0),
-		Batches: make([]Nex, 0),
 	}
-	batchesDiff := make([]Nex, 0)
 
 	// First find files diff
 	diff.Files = n.compareFiles(&state)
-
-	// Then, find all batches diffs
-	for _, batch := range n.Batches {
-		batchDiff := batch.DifferencesFromState(state)
-		if len(batchDiff.Batches) > 0 || len(batchDiff.Files) > 0 || batchDiff.User != "" {
-			batchesDiff = append(batchesDiff, *batchDiff)
-		}
-	}
 
 	if n.User != state.User {
 		diff.User = n.User

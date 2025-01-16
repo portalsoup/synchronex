@@ -20,3 +20,6 @@ uninstall:
 
 clean:
 	rm -f synchronex
+
+test:
+	go test ./...
