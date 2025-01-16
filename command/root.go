@@ -11,6 +11,7 @@ import (
 
 var (
 	Nex     *schema.Nex
+	Diff    *schema.Nex
 	RootCmd = &cobra.Command{
 		Use:   "synchronex",
 		Short: "Personal computer state manager",
@@ -20,7 +21,7 @@ var (
 			if err != nil {
 				// Initialize empty state if necessary
 				err = common.WriteStatefile(schema.Nex{
-					Files:   []schema.File{},
+					Files: []schema.File{},
 				})
 				if err != nil {
 					log.Fatalf("Error initializing state file: %s", err)
@@ -54,6 +55,16 @@ var (
 				log.Fatalf("Error parsing nex file[%s]:\n\tReason:\n%s", parsedNex, err)
 			}
 			Nex = parsedNex
+
+			// Validate changes with user
+			plan := parsedNex
+			state, err := common.ReadStatefile()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			diff := plan.DifferencesFromState(*state)
+			Diff = diff
 		},
 	}
 )

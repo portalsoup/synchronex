@@ -16,7 +16,7 @@ var ApplyCmd = &cobra.Command{
 	Long:  ``,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		// Validate changes with user
-		plan := Nex
+		plan := *Nex
 		state, err := common.ReadStatefile()
 		if err != nil {
 			log.Fatal(err)
@@ -36,9 +36,11 @@ var ApplyCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Println("Doing the work!")
+		common.ApplyDiff(Diff.Files)
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		err := common.WriteStatefile(*Nex)
+		nex := *Nex
+		err := common.WriteStatefile(nex)
 		if err != nil {
 			log.Fatal(err)
 		}

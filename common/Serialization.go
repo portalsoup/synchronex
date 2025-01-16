@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"log"
 	"os"
+	"path/filepath"
 	"synchronex/schema"
 )
 
@@ -30,8 +31,19 @@ func ParseNexFile(path string) (*schema.Nex, error) {
 }
 
 func WriteStatefile(state schema.Nex) (err error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return fmt.Errorf("error getting config dir: %v", err)
+	}
 
-	file, err := os.Create("statefile.hcl")
+	filePath := filepath.Join(configDir, "synchronex", "state.hcl")
+
+	err = os.MkdirAll(filepath.Dir(filePath), os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error creating config dir: %v", err)
+	}
+
+	file, err := os.Create(filePath)
 	if err != nil {
 		return fmt.Errorf("error creating file: %v", err)
 	}
@@ -55,10 +67,21 @@ func WriteStatefile(state schema.Nex) (err error) {
 }
 
 func ReadStatefile() (*schema.Nex, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return nil, fmt.Errorf("error getting config dir: %v", err)
+	}
+
+	filePath := filepath.Join(configDir, "synchronex", "state.hcl")
+
+	err = os.MkdirAll(filepath.Dir(filePath), os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("error creating config dir: %v", err)
+	}
+
 	var config = schema.Nex{}
 
-	err := hclsimple.DecodeFile("statefile.hcl", nil, &config)
-	log.Println("Found state:\t", config)
+	err = hclsimple.DecodeFile(filePath, nil, &config)
 	if err != nil {
 		return &config, fmt.Errorf("Failed to load configuration: %s", err)
 	}

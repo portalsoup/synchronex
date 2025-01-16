@@ -11,7 +11,7 @@ var PlanCmd = &cobra.Command{
 	Short: "Personal computer state manager",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		plan := Nex
+		plan := *Nex
 		state, err := common.ReadStatefile()
 		if err != nil {
 			log.Fatal(err)

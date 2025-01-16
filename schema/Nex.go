@@ -9,7 +9,6 @@ import (
 
 type Nex struct {
 	execution.Job[Nex] `json:"job,omitempty"`
-	User               string `hcl:"user,optional" json:"user,omitempty"`
 	Files              []File `hcl:"file,block" json:"files,omitempty"`
 }
 
@@ -23,22 +22,17 @@ func (n *Nex) Execute() {
 
 func (n *Nex) DifferencesFromState(state Nex) (diff *Nex) {
 	diff = &Nex{
-		Files:   make([]File, 0),
+		Files: make([]File, 0),
 	}
 
 	// First find files diff
 	diff.Files = n.compareFiles(&state)
-
-	if n.User != state.User {
-		diff.User = n.User
-	}
 
 	return diff
 }
 
 func (n *Nex) compareFiles(state *Nex) (diff []File) {
 	diff = make([]File, 0)
-	userChanged := n.User != state.User
 
 	plannedFiles := n.Files
 	stateFiles := state.Files
@@ -46,21 +40,22 @@ func (n *Nex) compareFiles(state *Nex) (diff []File) {
 	sort.Sort(FileSorter(plannedFiles))
 	sort.Sort(FileSorter(stateFiles))
 
-	// First compare the state with the plan to find things that no longer exist
+	// First compare the state with the plan to find things that no longer exist (Removals)
 	for _, stateFile := range stateFiles {
-		if !core.Contains(plannedFiles, stateFile) {
-			log.Println("Removing file: ", stateFile.Destination)
-			diff = append(diff, File{
-				Action:      "Remove",
-				Destination: stateFile.Destination,
-			})
+		if difference := stateFile.DifferencesFromState(plannedFiles); difference != nil {
+			// Cast the result back to a *File and add to the diff
+			if diffFile, ok := difference.(*File); ok {
+				diffFile.Action = "Remove"
+				diff = append(diff, *diffFile)
+			}
 		}
 	}
 
-	// Then compare the plan with the state to find out which things are new/changing
+	// Then compare the plan with the state to find new files or changes (Additions and Updates)
 	for _, plannedFile := range plannedFiles {
-		if core.Contains(stateFiles, plannedFile) && userChanged {
-			log.Println("Updating file: ", plannedFile.Destination)
+		log.Println("A planned file: ", plannedFile)
+		if core.Contains(stateFiles, plannedFile) {
+			// User has changed and the file exists in both states; mark it as "Update"
 			diff = append(diff,
 				File{
 					Action:      "Remove",
@@ -71,12 +66,14 @@ func (n *Nex) compareFiles(state *Nex) (diff []File) {
 					Destination: plannedFile.Destination,
 				},
 			)
-		} else if !core.Contains(stateFiles, plannedFile) {
-			log.Println("Adding file: ", plannedFile.Destination)
-			diff = append(diff, File{
-				Action:      "Add",
-				Destination: plannedFile.Destination,
-			})
+		} else if difference := plannedFile.DifferencesFromState(stateFiles); difference != nil {
+			// Handle new files (Additions)
+			if _, ok := difference.(*File); ok {
+				diff = append(diff, File{
+					Action:      "Add",
+					Destination: plannedFile.Destination,
+				})
+			}
 		}
 	}
 	return diff
