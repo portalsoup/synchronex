@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"log"
 	"synchronex/common"
@@ -18,6 +19,6 @@ var PlanCmd = &cobra.Command{
 		}
 
 		diff := common.PrintPretty(plan.DifferencesFromState(*state))
-		log.Println(diff)
+		fmt.Println(diff)
 	},
 }

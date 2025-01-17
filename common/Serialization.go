@@ -18,7 +18,12 @@ func PrintPretty(v interface{}) string {
 		log.Fatalln("Failed to generate pretty JSON:", err)
 	}
 
-	return string(prettyJSON)
+	summary := ""
+	if nex, ok := v.(*schema.Nex); ok {
+		add, remove := nex.DiffSummary()
+		summary = fmt.Sprintf("\n\n%d to add, %d to remove", add, remove)
+	}
+	return fmt.Sprintf("%s%s", string(prettyJSON), summary)
 }
 
 func ParseNexFile(path string) (*schema.Nex, error) {
@@ -26,6 +31,11 @@ func ParseNexFile(path string) (*schema.Nex, error) {
 	err := hclsimple.DecodeFile(path, nil, &config)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to load configuration: %s", err)
+	}
+
+	err = replaceWildcards(&config)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to expand wildcards: %s", err)
 	}
 	return &config, nil
 }
@@ -79,11 +89,32 @@ func ReadStatefile() (*schema.Nex, error) {
 		return nil, fmt.Errorf("error creating config dir: %v", err)
 	}
 
-	var config = schema.Nex{}
-
-	err = hclsimple.DecodeFile(filePath, nil, &config)
+	config, err := ParseNexFile(filePath)
 	if err != nil {
-		return &config, fmt.Errorf("Failed to load configuration: %s", err)
+		return config, fmt.Errorf("Failed to load configuration: %s", err)
 	}
-	return &config, nil
+
+	return config, nil
+}
+
+func replaceWildcards(n *schema.Nex) error {
+	var expandedFiles []schema.File
+
+	// Iterate over each File in the Nex struct
+	for _, file := range n.Files {
+		// Check and expand wildcards
+		if expanded, err := file.ExpandFolderWildcard(); err != nil {
+			return fmt.Errorf("failed to expand wildcard for file %s: %w", file.Source, err)
+		} else if expanded != nil {
+			// Append expanded files if wildcard was found
+			expandedFiles = append(expandedFiles, expanded...)
+		} else {
+			// Append the original file if no wildcard was found
+			expandedFiles = append(expandedFiles, file)
+		}
+	}
+
+	// Replace the original Files array with the expanded list
+	n.Files = expandedFiles
+	return nil
 }

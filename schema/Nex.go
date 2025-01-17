@@ -1,7 +1,6 @@
 package schema
 
 import (
-	"log"
 	"sort"
 	"synchronex/common/execution"
 	"synchronex/core"
@@ -53,7 +52,6 @@ func (n *Nex) compareFiles(state *Nex) (diff []File) {
 
 	// Then compare the plan with the state to find new files or changes (Additions and Updates)
 	for _, plannedFile := range plannedFiles {
-		log.Println("A planned file: ", plannedFile)
 		if core.Contains(stateFiles, plannedFile) {
 			// User has changed and the file exists in both states; mark it as "Update"
 			diff = append(diff,
@@ -77,4 +75,20 @@ func (n *Nex) compareFiles(state *Nex) (diff []File) {
 		}
 	}
 	return diff
+}
+
+func (n *Nex) DiffSummary() (add int, remove int) {
+	// example output
+	add = 0
+	remove = 0
+
+	for _, file := range n.Files {
+		if file.Action == "Add" {
+			add++
+		} else if file.Action == "Remove" {
+			remove++
+		}
+	}
+
+	return add, remove
 }
