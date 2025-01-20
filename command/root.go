@@ -11,15 +11,24 @@ import (
 
 var (
 	Nex     *schema.Nex
+	State   *schema.Nex
+	Diff    *schema.Nex
 	RootCmd = &cobra.Command{
 		Use:   "synchronex",
 		Short: "Personal computer state manager",
 		Long:  ``,
-		Run: func(cmd *cobra.Command, args []string) {
-			log.Printf("Running command: %s", cmd.Name())
-			log.Printf("Got this nex: %#v", *Nex)
-		},
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			_, err := common.ReadStatefile()
+			if err != nil {
+				// Initialize empty state if necessary
+				err = common.WriteStatefile(schema.Nex{
+					Files: []schema.File{},
+				})
+				if err != nil {
+					log.Fatalf("Error initializing state file: %s", err)
+				}
+			}
+
 			quiet, err := cmd.Root().Flags().GetBool("quiet")
 			if err != nil {
 				log.Fatalf("Error getting verbose flag: %s", err)
@@ -46,13 +55,27 @@ var (
 			if err != nil || parsedNex == nil {
 				log.Fatalf("Error parsing nex file[%s]:\n\tReason:\n%s", parsedNex, err)
 			}
+			parsedNex.ExpandHomeFolder()
 			Nex = parsedNex
+
+			// Validate changes with user
+			plan := parsedNex
+			State, err = common.ReadStatefile()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			diff := plan.DifferencesFromState(*State)
+			Diff = diff
 		},
 	}
 )
 
 func init() {
 	RootCmd.Flags().BoolP("quiet", "q", false, "Silence output to stdout")
+
+	RootCmd.AddCommand(PlanCmd)
+	RootCmd.AddCommand(ApplyCmd)
 }
 
 func Execute() (err error) {
