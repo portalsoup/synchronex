@@ -1,9 +1,11 @@
 package schema
 
 import (
+	"log"
+	"os"
+	"path/filepath"
 	"sort"
 	"synchronex/common/execution"
-	"synchronex/core"
 )
 
 type Nex struct {
@@ -52,24 +54,13 @@ func (n *Nex) compareFiles(state *Nex) (diff []File) {
 
 	// Then compare the plan with the state to find new files or changes (Additions and Updates)
 	for _, plannedFile := range plannedFiles {
-		if core.Contains(stateFiles, plannedFile) {
-			// User has changed and the file exists in both states; mark it as "Update"
-			diff = append(diff,
-				File{
-					Action:      "Remove",
-					Destination: plannedFile.Destination,
-				},
-				File{
-					Action:      "Add",
-					Destination: plannedFile.Destination,
-				},
-			)
-		} else if difference := plannedFile.DifferencesFromState(stateFiles); difference != nil {
+		if difference := plannedFile.DifferencesFromState(stateFiles); difference != nil {
 			// Handle new files (Additions)
 			if _, ok := difference.(*File); ok {
 				diff = append(diff, File{
 					Action:      "Add",
 					Destination: plannedFile.Destination,
+					Source:      plannedFile.Source,
 				})
 			}
 		}
@@ -91,4 +82,16 @@ func (n *Nex) DiffSummary() (add int, remove int) {
 	}
 
 	return add, remove
+
+}
+func (n *Nex) ExpandHomeFolder() {
+	for i := range n.Files {
+		n.Files[i].Destination = filepath.Join(os.Getenv("HOME"), n.Files[i].Destination)
+
+		wd, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
+		n.Files[i].Source = filepath.Join(wd, n.Files[i].Source)
+	}
 }

@@ -11,6 +11,7 @@ import (
 
 var (
 	Nex     *schema.Nex
+	State   *schema.Nex
 	Diff    *schema.Nex
 	RootCmd = &cobra.Command{
 		Use:   "synchronex",
@@ -54,16 +55,17 @@ var (
 			if err != nil || parsedNex == nil {
 				log.Fatalf("Error parsing nex file[%s]:\n\tReason:\n%s", parsedNex, err)
 			}
+			parsedNex.ExpandHomeFolder()
 			Nex = parsedNex
 
 			// Validate changes with user
 			plan := parsedNex
-			state, err := common.ReadStatefile()
+			State, err = common.ReadStatefile()
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			diff := plan.DifferencesFromState(*state)
+			diff := plan.DifferencesFromState(*State)
 			Diff = diff
 		},
 	}

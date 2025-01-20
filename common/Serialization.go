@@ -17,13 +17,7 @@ func PrintPretty(v interface{}) string {
 	if err != nil {
 		log.Fatalln("Failed to generate pretty JSON:", err)
 	}
-
-	summary := ""
-	if nex, ok := v.(*schema.Nex); ok {
-		add, remove := nex.DiffSummary()
-		summary = fmt.Sprintf("\n\n%d to add, %d to remove", add, remove)
-	}
-	return fmt.Sprintf("%s%s", string(prettyJSON), summary)
+	return fmt.Sprintf("%s", string(prettyJSON))
 }
 
 func ParseNexFile(path string) (*schema.Nex, error) {
@@ -66,7 +60,6 @@ func WriteStatefile(state schema.Nex) (err error) {
 
 	f := hclwrite.NewEmptyFile()
 	gohcl.EncodeIntoBody(&state, f.Body())
-	fmt.Printf("%s", f.Bytes())
 
 	// Write the HCL bytes to the file
 	if _, err := file.Write(f.Bytes()); err != nil {
